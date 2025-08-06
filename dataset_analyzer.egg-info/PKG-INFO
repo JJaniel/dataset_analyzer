@@ -5,6 +5,7 @@ Summary: Add your description here
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 Requires-Dist: pandas
+Requires-Dist: polars
 Requires-Dist: langchain-google-genai
 Requires-Dist: langchain
 Requires-Dist: langchain-core
@@ -12,7 +13,6 @@ Requires-Dist: python-dotenv
 Requires-Dist: openpyxl
 Requires-Dist: openai
 Requires-Dist: groq
-Requires-Dist: google-generativeai
 
 # Dataset Analyzer
 
@@ -22,17 +22,20 @@ Requires-Dist: google-generativeai
 
 ## Overview
 
-The Dataset Analyzer is a powerful tool designed to streamline the process of understanding and harmonizing multiple datasets. Leveraging the advanced capabilities of Google's Gemini model, it performs deep semantic analysis on individual datasets and intelligently synthesizes these analyses to identify common features, suggest canonical names, and provide a comprehensive overview of your combined data landscape.
+The Dataset Analyzer is a powerful tool designed to streamline the process of understanding and harmonizing multiple datasets. Leveraging the advanced capabilities of various Large Language Models (LLMs), it performs deep semantic analysis on individual datasets and intelligently synthesizes these analyses to identify common features, suggest canonical names, and provide a comprehensive overview of your combined data landscape.
 
 This tool is invaluable for researchers, data scientists, and analysts working with disparate datasets, enabling them to quickly identify relationships, standardize terminology, and unlock new insights from their data.
 
 ## Features
 
--   **Intelligent Semantic Analysis**: Utilizes the Gemini API to perform in-depth semantic understanding of each column within your datasets, describing its real-world meaning, data types, and suggesting potential synonyms.
+-   **Intelligent Semantic Analysis**: Utilizes various LLM APIs (Google Gemini, NVIDIA, Groq) to perform in-depth semantic understanding of each column within your datasets, describing its real-world meaning, data types, and suggesting potential synonyms.
 -   **Automated Data Harmonization**: Automatically identifies and groups semantically identical columns across different datasets, facilitating consistent data integration.
 -   **Canonical Naming Suggestions**: Proposes standardized, canonical names for grouped features, promoting clarity and uniformity in your data schema.
--   **Comprehensive Synthesis Report**: Generates a human-readable report summarizing the combined information across all analyzed datasets, highlighting research potential and data relationships.
+-   **Comprehensive Synthesis Report**: Generates a structured JSON report summarizing the combined information across all analyzed datasets, highlighting data relationships.
 -   **Flexible Data Ingestion**: Supports common tabular data formats including CSV (`.csv`) and Excel (`.xlsx`, `.xls`) files.
+-   **Robust LLM Fallback**: Implements a fallback mechanism to seamlessly switch between LLM providers (Google, NVIDIA, Groq) if one fails or hits rate limits, ensuring continuous operation.
+-   **Configurable LLM Providers**: Allows users to specify the order of LLM providers to use via command-line arguments, offering flexibility and control.
+-   **Data Manipulation with Polars**: The `data_manipulator.py` script now leverages Polars for high-performance data reading, column standardization, merging, and filtering, offering significant speed improvements for large datasets.
 
 ## Getting Started
 
@@ -82,70 +85,99 @@ Follow these steps to set up and run the Dataset Analyzer on your local machine.
     uv pip install -e .
     ```
 
-5.  **Set Up Google API Key**
+5.  **Set Up LLM API Keys**
 
-    The Dataset Analyzer uses the Google Gemini API for its core analysis. You need to obtain an API key from the Google AI Studio.
+    The Dataset Analyzer uses various LLM APIs. You need to obtain API keys for the services you wish to use.
 
-    -   Go to [Google AI Studio](https://aistudio.google.com/)
-    -   Create a new API key.
+    -   **Google Gemini API**: Obtain from [Google AI Studio](https://aistudio.google.com/)
+    -   **NVIDIA API**: Obtain from [NVIDIA AI Playground](https://build.nvidia.com/)
+    -   **Groq API**: Obtain from [Groq Console](https://console.groq.com/)
 
-    Once you have your API key, create a file named `.env` in the root directory of this project and add your key as follows:
+    Once you have your API keys, create a file named `.env` in the root directory of this project and add your keys as follows:
 
     ```dotenv
     GOOGLE_API_KEY="your_google_api_key_here"
+    NVIDIA_API_KEY="your_nvidia_api_key_here"
+    GROQ_API_KEY="your_groq_api_key_here"
     ```
 
-    Replace `"your_google_api_key_here"` with your actual Google API Key.
+    Replace `"your_api_key_here"` with your actual API Keys.
 
 ## Usage
 
 ### 1. Generate Harmonization Map
 
-To analyze your datasets and generate the harmonization map, run the `main.py` script. You can optionally save the output JSON to a file using the `--output_json` argument.
+To analyze your datasets and generate the harmonization map, run the `main.py` script. You can optionally save the output JSON to a file using the `--output_json` argument and specify the LLM providers to use.
 
 ```bash
-python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] [--prompt "Your additional instructions here"]
+python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] [--prompt "Your additional instructions here"] [--llm_providers "provider1,provider2,..."]
 ```
 
-**Example:**
+-   `<path_to_your_dataset_folder>`: The absolute or relative path to the folder containing your dataset files (CSV or Excel).
+-   `--output_json <output_file_path>`: Optional. Path to save the harmonization map JSON output (e.g., `harmonization_map.json`).
+-   `--prompt "Your additional instructions here"`: Optional. Additional prompt to include in the synthesis phase for custom requirements.
+-   `--llm_providers "provider1,provider2,..."`: Optional. A comma-separated list of LLM providers to use, in order of preference. Supported providers are `google`, `nvidia`, and `groq`. If not specified, the default order is `google,nvidia,groq`.
 
-If your datasets are located in a folder named `my_data` within the project directory, and you want to save the harmonization map to `harmonization_map.json`:
+**Examples:**
+
+-   **Basic usage (using default LLM fallback order):**
+
+    ```bash
+    python main.py my_data
+    ```
+
+-   **Saving output to a JSON file:**
+
+    ```bash
+    python main.py my_data --output_json harmonization_map.json
+    ```
+
+-   **Using specific LLM providers (e.g., only NVIDIA and Groq, in that order):**
+
+    ```bash
+    python main.py my_data --llm_providers "nvidia,groq"
+    ```
+
+-   **Adding a custom prompt for synthesis:**
+
+    ```bash
+    python main.py my_data --prompt "Also, provide a brief summary of the most important findings."
+    ```
+
+### 2. Data Manipulation with Polars (`data_manipulator.py`)
+
+Once you have generated the `harmonization_map.json` file using `main.py`, you can use the `tools/data_manipulator.py` script to perform various data manipulation tasks. This script leverages the harmonization map to understand column relationships across your datasets.
 
 ```bash
-python main.py my_data --output_json harmonization_map.json
-```
-
-This will print the JSON harmonization map to the console and save it to the specified file.
-
-### 2. Use Data Harmonizer for Manipulation
-
-Once you have generated the `harmonization_map.json` file, you can use the `data_harmonizer.py` script to perform various data manipulation tasks, such as extracting unique values for a canonical feature.
-
-```bash
-python tools/data_harmonizer.py <harmonization_map_path> <canonical_feature_name> <data_folder_path>
+python tools/data_manipulator.py <harmonization_map_path> <data_folder_path> --action <action_type> [--canonical_feature <feature_name>] [--filter_value <value>]
 ```
 
 -   `<harmonization_map_path>`: Path to the JSON file containing the harmonization map (e.g., `harmonization_map.json`).
--   `<canonical_feature_name>`: The standardized name of the feature you want to analyze (e.g., `drug_id`, `cell_line_name`).
 -   `<data_folder_path>`: Path to the folder containing your original datasets.
+-   `--action <action_type>`: The type of data manipulation to perform. Choose from: `unique_values`, `merge`, `filter`, or `llm_guided_manipulation`.
+-   `--request <natural_language_request>`: Required for the `llm_guided_manipulation` action. Your natural language description of the data manipulation you want to perform.
+-   `--canonical_feature <feature_name>`: Required for `unique_values` and `filter` actions, and for specifying the merge key in the `merge` action. This is the standardized name of the feature you want to work with (e.g., `DrugID`, `CellLine`).
+-   `--filter_value <value>`: Required for the `filter` action. The specific value to filter by.
 
-**Example:**
+**Examples:**
 
-To get all unique drug IDs from your datasets using the generated `harmonization_map.json`:
+-   **Get all unique values for a canonical feature (e.g., `DrugID`):**
 
-```bash
-python data_harmonizer.py harmonization_map.json drug_id my_data
-```
+    ```bash
+    python tools/data_manipulator.py harmonization_map.json my_data --action unique_values --canonical_feature DrugID
+    ```
 
-This will output a list of all unique values found for the `drug_id` canonical feature across all relevant datasets.
+-   **Merge all datasets based on a canonical key (e.g., `COSMICID`):**
 
-## Contributing
+    ```bash
+    python tools/data_manipulator.py harmonization_map.json my_data --action merge --canonical_feature COSMICID
+    ```
 
-Contributions are welcome! If you have suggestions for improvements, bug fixes, or new features, please feel free to open an issue or submit a pull request.
+-   **Filter merged data by a canonical feature and value (e.g., `CellLine` equals `A549`):**
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+    ```bash
+    python tools/data_manipulator.py harmonization_map.json my_data --action filter --canonical_feature CellLine --filter_value A549
+    ```
 
 ## Contributing
 

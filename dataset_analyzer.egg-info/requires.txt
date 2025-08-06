@@ -1,4 +1,5 @@
 pandas
+polars
 langchain-google-genai
 langchain
 langchain-core
@@ -6,4 +7,3 @@ python-dotenv
 openpyxl
 openai
 groq
-google-generativeai
