@@ -6,17 +6,19 @@
 
 ## Overview
 
-The Dataset Analyzer is a powerful tool designed to streamline the process of understanding and harmonizing multiple datasets. Leveraging the advanced capabilities of Google's Gemini model, it performs deep semantic analysis on individual datasets and intelligently synthesizes these analyses to identify common features, suggest canonical names, and provide a comprehensive overview of your combined data landscape.
+The Dataset Analyzer is a powerful tool designed to streamline the process of understanding and harmonizing multiple datasets. Leveraging the advanced capabilities of various Large Language Models (LLMs), it performs deep semantic analysis on individual datasets and intelligently synthesizes these analyses to identify common features, suggest canonical names, and provide a comprehensive overview of your combined data landscape.
 
 This tool is invaluable for researchers, data scientists, and analysts working with disparate datasets, enabling them to quickly identify relationships, standardize terminology, and unlock new insights from their data.
 
 ## Features
 
--   **Intelligent Semantic Analysis**: Utilizes the Gemini API to perform in-depth semantic understanding of each column within your datasets, describing its real-world meaning, data types, and suggesting potential synonyms.
+-   **Intelligent Semantic Analysis**: Utilizes various LLM APIs (Google Gemini, NVIDIA, Groq) to perform in-depth semantic understanding of each column within your datasets, describing its real-world meaning, data types, and suggesting potential synonyms.
 -   **Automated Data Harmonization**: Automatically identifies and groups semantically identical columns across different datasets, facilitating consistent data integration.
 -   **Canonical Naming Suggestions**: Proposes standardized, canonical names for grouped features, promoting clarity and uniformity in your data schema.
--   **Comprehensive Synthesis Report**: Generates a human-readable report summarizing the combined information across all analyzed datasets, highlighting research potential and data relationships.
+-   **Comprehensive Synthesis Report**: Generates a structured JSON report summarizing the combined information across all analyzed datasets, highlighting data relationships.
 -   **Flexible Data Ingestion**: Supports common tabular data formats including CSV (`.csv`) and Excel (`.xlsx`, `.xls`) files.
+-   **Robust LLM Fallback**: Implements a fallback mechanism to seamlessly switch between LLM providers (Google, NVIDIA, Groq) if one fails or hits rate limits, ensuring continuous operation.
+-   **Configurable LLM Providers**: Allows users to specify the order of LLM providers to use via command-line arguments, offering flexibility and control.
 
 ## Getting Started
 
@@ -66,54 +68,68 @@ Follow these steps to set up and run the Dataset Analyzer on your local machine.
     uv pip install -e .
     ```
 
-5.  **Set Up Google API Key**
+5.  **Set Up LLM API Keys**
 
-    The Dataset Analyzer uses the Google Gemini API for its core analysis. You need to obtain an API key from the Google AI Studio.
+    The Dataset Analyzer uses various LLM APIs. You need to obtain API keys for the services you wish to use.
 
-    -   Go to [Google AI Studio](https://aistudio.google.com/)
-    -   Create a new API key.
+    -   **Google Gemini API**: Obtain from [Google AI Studio](https://aistudio.google.com/)
+    -   **NVIDIA API**: Obtain from [NVIDIA AI Playground](https://build.nvidia.com/)
+    -   **Groq API**: Obtain from [Groq Console](https://console.groq.com/)
 
-    Once you have your API key, create a file named `.env` in the root directory of this project and add your key as follows:
+    Once you have your API keys, create a file named `.env` in the root directory of this project and add your keys as follows:
 
     ```dotenv
     GOOGLE_API_KEY="your_google_api_key_here"
+    NVIDIA_API_KEY="your_nvidia_api_key_here"
+    GROQ_API_KEY="your_groq_api_key_here"
     ```
 
-    Replace `"your_google_api_key_here"` with your actual Google API Key.
+    Replace `"your_api_key_here"` with your actual API Keys.
 
 ## Usage
 
 ### 1. Generate Harmonization Map
 
-To analyze your datasets and generate the harmonization map, run the `main.py` script. You can optionally save the output JSON to a file using the `--output_json` argument.
+To analyze your datasets and generate the harmonization map, run the `main.py` script. You can optionally save the output JSON to a file using the `--output_json` argument and specify the LLM providers to use.
 
 ```bash
 python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] [--prompt "Your additional instructions here"] [--llm_providers "provider1,provider2,..."]
 ```
 
--   `--llm_providers`: Optional. A comma-separated list of LLM providers to use, in order of preference. Supported providers are `google`, `nvidia`, and `groq`. If not specified, the default order is `google,nvidia,groq`.
+-   `<path_to_your_dataset_folder>`: The absolute or relative path to the folder containing your dataset files (CSV or Excel).
+-   `--output_json <output_file_path>`: Optional. Path to save the harmonization map JSON output (e.g., `harmonization_map.json`).
+-   `--prompt "Your additional instructions here"`: Optional. Additional prompt to include in the synthesis phase for custom requirements.
+-   `--llm_providers "provider1,provider2,..."`: Optional. A comma-separated list of LLM providers to use, in order of preference. Supported providers are `google`, `nvidia`, and `groq`. If not specified, the default order is `google,nvidia,groq`.
 
-**Example:**
+**Examples:**
 
-To use only NVIDIA and Groq, in that order:
+-   **Basic usage (using default LLM fallback order):**
 
-```bash
-python main.py my_data --llm_providers "nvidia,groq"
-```
+    ```bash
+    python main.py my_data
+    ```
 
-**Example:**
+-   **Saving output to a JSON file:**
 
-If your datasets are located in a folder named `my_data` within the project directory, and you want to save the harmonization map to `harmonization_map.json`:
+    ```bash
+    python main.py my_data --output_json harmonization_map.json
+    ```
 
-```bash
-python main.py my_data --output_json harmonization_map.json
-```
+-   **Using specific LLM providers (e.g., only NVIDIA and Groq, in that order):**
 
-This will print the JSON harmonization map to the console and save it to the specified file.
+    ```bash
+    python main.py my_data --llm_providers "nvidia,groq"
+    ```
+
+-   **Adding a custom prompt for synthesis:**
+
+    ```bash
+    python main.py my_data --prompt "Also, provide a brief summary of the most important findings."
+    ```
 
 ### 2. Use Data Harmonizer for Manipulation
 
-Once you have generated the `harmonization_map.json` file, you can use the `data_harmonizer.py` script to perform various data manipulation tasks, such as extracting unique values for a canonical feature.
+Once you have generated the `harmonization_map.json` file, you can use the `tools/data_harmonizer.py` script to perform various data manipulation tasks, such as extracting unique values for a canonical feature.
 
 ```bash
 python tools/data_harmonizer.py <harmonization_map_path> <canonical_feature_name> <data_folder_path>
@@ -128,18 +144,10 @@ python tools/data_harmonizer.py <harmonization_map_path> <canonical_feature_name
 To get all unique drug IDs from your datasets using the generated `harmonization_map.json`:
 
 ```bash
-python data_harmonizer.py harmonization_map.json drug_id my_data
+python tools/data_harmonizer.py harmonization_map.json drug_id my_data
 ```
 
 This will output a list of all unique values found for the `drug_id` canonical feature across all relevant datasets.
-
-## Contributing
-
-Contributions are welcome! If you have suggestions for improvements, bug fixes, or new features, please feel free to open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
