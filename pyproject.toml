@@ -11,4 +11,10 @@ dependencies = [
     "langchain-core",
     "python-dotenv",
     "openpyxl",
+    "openai",
+    "groq",
 ]
+
+[tool.setuptools.packages.find]
+include = ["dataset_analyzer", "tools"]
+

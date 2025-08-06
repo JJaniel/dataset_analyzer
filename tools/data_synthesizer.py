@@ -1,13 +1,11 @@
 import json
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
+from tools.llm_manager import get_llm_response
 
 def synthesize_analyses(all_analyses, additional_prompt=""):
     """
     Synthesizes analyses from multiple datasets to find common features.
     """
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
-    
     template = """
     You are a research assistant. Your goal is to harmonize multiple dataset analyses to help a researcher understand how their data fits together.
 
@@ -55,13 +53,14 @@ def synthesize_analyses(all_analyses, additional_prompt=""):
     {additional_prompt}
     """
 
-    prompt = PromptTemplate(template=template, input_variables=["analyses_json", "additional_prompt"])
-    chain = prompt | llm
+    input_variables = {
+        "analyses_json": json.dumps(all_analyses, indent=2),
+        "additional_prompt": additional_prompt
+    }
 
     try:
-        analyses_str = json.dumps(all_analyses, indent=2)
-        result = chain.invoke({"analyses_json": analyses_str, "additional_prompt": additional_prompt})
-        cleaned_result = result.content.strip().replace("```json", "").replace("```", "")
+        result_content = get_llm_response(template, input_variables)
+        cleaned_result = result_content.strip().replace("```json", "").replace("```", "")
         return json.loads(cleaned_result)
     except Exception as e:
         return f"An error occurred during synthesis: {e}"

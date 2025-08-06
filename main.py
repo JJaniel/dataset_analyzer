@@ -1,8 +1,8 @@
 import os
 import argparse
 import pandas as pd
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
+from tools.llm_manager import get_llm_response
 from dotenv import load_dotenv
 import json
 from tools.data_synthesizer import synthesize_analyses
@@ -30,8 +30,6 @@ def analyze_individual_dataset(file_path, df):
     """
     Analyzes a single dataset to understand its structure and semantic meaning.
     """
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
-    
     template = """
     You are a data analyst. Your task is to perform a deep semantic analysis of the following dataset sample.
 
@@ -61,16 +59,15 @@ def analyze_individual_dataset(file_path, df):
     Provide only the JSON output.
     """
 
-    prompt = PromptTemplate(template=template, input_variables=["file_name", "dataset_sample"])
-    chain = prompt | llm
+    input_variables = {
+        "file_name": os.path.basename(file_path),
+        "dataset_sample": df.to_string()
+    }
 
     try:
-        result = chain.invoke({
-            "file_name": os.path.basename(file_path),
-            "dataset_sample": df.to_string()
-        })
+        result_content = get_llm_response(template, input_variables)
         # Clean the output to ensure it's valid JSON
-        cleaned_result = result.content.strip().replace("```json", "").replace("```", "")
+        cleaned_result = result_content.strip().replace("```json", "").replace("```", "")
         return json.loads(cleaned_result)
     except Exception as e:
         print(f"An error occurred during individual analysis of {file_path}: {e}")
