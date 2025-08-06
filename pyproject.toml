@@ -10,4 +10,5 @@ dependencies = [
     "langchain",
     "langchain-core",
     "python-dotenv",
+    "openpyxl",
 ]
