@@ -130,7 +130,9 @@ python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] 
 
 ### 2. Data Manipulation with Polars (`data_manipulator.py`)
 
-Once you have generated the `harmonization_map.json` file using `main.py`, you can use the `tools/data_manipulator.py` script to perform various data manipulation tasks. This script leverages the harmonization map to understand column relationships across your datasets.
+Once you have generated the `harmonization_map.json` file using `main.py`, or if you let `data_manipulator.py` auto-generate it, you can use this script to perform various data manipulation tasks. This script leverages the harmonization map to understand column relationships across your datasets.
+
+If the `harmonization_map.json` is not found at the specified path, `data_manipulator.py` will attempt to auto-generate it using the provided `data_folder_path` and the default LLM providers (or those specified via `--llm_providers`).
 
 ```bash
 python tools/data_manipulator.py <harmonization_map_path> <data_folder_path> --action <action_type> [--canonical_feature <feature_name>] [--filter_value <value>]

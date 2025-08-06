@@ -3,6 +3,8 @@ import json
 import os
 import argparse
 from tools.llm_manager import get_llm_response
+from tools.data_analyzer import analyze_individual_dataset, get_dataset_sample
+from tools.data_synthesizer import synthesize_analyses
 
 def load_harmonization_map(json_file_path):
     """
@@ -172,24 +174,24 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
     Example Plan (Merge and then Filter):
     ```json
     [
-      {
+      {{
         "function": "merge_datasets_by_canonical_key",
-        "args": {
+        "args": {{
           "harmonization_map": "_harmonization_map_",
           "data_folder_path": "_data_folder_path_",
           "merge_key_canonical_name": "COSMICID"
-        },
+        }},
         "output_variable": "merged_df"
-      },
-      {
+      }},
+      {{
         "function": "filter_dataframe_by_canonical_value",
-        "args": {
+        "args": {{
           "df": "_merged_df_",
           "canonical_feature_name": "CellLine",
           "value": "A549"
-        },
+        }},
         "output_variable": "filtered_df"
-      }
+      }}
     ]
     ```
 
@@ -263,7 +265,7 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
                 print(f"Unique values: {result}")
             elif isinstance(result, pl.DataFrame):
                 print("Resulting DataFrame (first 5 rows):")
-                print(result.head().to_pandas().to_markdown(index=False)) # Convert to pandas for markdown printing
+                print(result.head().to_pandas().to_markdown(index=False))
                 print(f"Shape: {result.shape}")
 
         except Exception as e:
@@ -295,7 +297,42 @@ def main():
 
     harmonization_map = load_harmonization_map(args.harmonization_map_path)
     if harmonization_map is None:
-        return
+        # Attempt to auto-generate harmonization map if not found
+        print("Harmonization map not found. Attempting to auto-generate...")
+        if not os.path.isdir(args.data_folder_path):
+            print(f"Error: Data folder path '{args.data_folder_path}' is not a valid directory. Cannot auto-generate harmonization map.")
+            return
+
+        all_analyses = {}
+        print("---" + " Auto-generating Phase 1: Individual Dataset Analysis " + "---")
+        for filename in os.listdir(args.data_folder_path):
+            file_path = os.path.join(args.data_folder_path, filename)
+            if os.path.isfile(file_path):
+                print(f"Analyzing {filename}...")
+                df = get_dataset_sample(file_path)
+                if df is not None:
+                    analysis = analyze_individual_dataset(file_path, df, [p.strip() for p in args.llm_providers.split(',')])
+                    if analysis:
+                        all_analyses[filename] = analysis
+
+        if not all_analyses:
+            print("No datasets were successfully analyzed for auto-generation of harmonization map.")
+            return
+
+        print("\n---" + " Auto-generating Phase 2: Cross-Dataset Synthesis " + "---")
+        harmonization_map = synthesize_analyses(all_analyses, "", [p.strip() for p in args.llm_providers.split(',')])
+
+        if isinstance(harmonization_map, str):
+            print(f"Error during auto-generation of synthesis: {harmonization_map}")
+            return
+
+        try:
+            with open(args.harmonization_map_path, 'w') as f:
+                json.dump(harmonization_map, f, indent=2)
+            print(f"\nAuto-generated harmonization map saved to: {args.harmonization_map_path}")
+        except Exception as e:
+            print(f"Error saving auto-generated harmonization map to {args.harmonization_map_path}: {e}")
+            return
 
     if not os.path.isdir(args.data_folder_path):
         print(f"Error: The data folder path '{args.data_folder_path}' is not a valid directory.")
