@@ -5,7 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "pandas",
+    "pandas", # Keep pandas for now, as main.py still uses it for df.to_string()
+    "polars",
     "langchain-google-genai",
     "langchain",
     "langchain-core",
@@ -13,7 +14,6 @@ dependencies = [
     "openpyxl",
     "openai",
     "groq",
-    "google-generativeai",
 ]
 
 [tool.setuptools.packages.find]

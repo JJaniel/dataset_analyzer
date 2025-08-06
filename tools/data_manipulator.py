@@ -1,4 +1,4 @@
-import pandas as pd
+import polars as pl
 import json
 import os
 import argparse
@@ -19,13 +19,21 @@ def load_harmonization_map(json_file_path):
 
 def read_dataset(file_path):
     """
-    Reads a dataset file (CSV or Excel) and returns a pandas DataFrame.
+    Reads a dataset file (CSV or Excel) and returns a Polars DataFrame.
     """
     try:
         if file_path.endswith('.csv'):
-            return pd.read_csv(file_path)
+            return pl.read_csv(file_path)
         elif file_path.endswith(('.xlsx', '.xls')):
-            return pd.read_excel(file_path)
+            # Polars requires 'xlsx2csv' or similar for direct Excel reading
+            # For simplicity, we'll use pandas to read and then convert to Polars
+            # For production, consider direct Polars Excel readers if available or convert to CSV first
+            try:
+                import pandas as pd
+                return pl.from_pandas(pd.read_excel(file_path))
+            except ImportError:
+                print("Error: pandas is required for reading Excel files. Please install it (`pip install pandas`).")
+                return None
         else:
             print(f"Unsupported file format for {file_path}. Only .csv, .xlsx, .xls are supported.")
             return None
@@ -33,41 +41,32 @@ def read_dataset(file_path):
         print(f"Error reading {file_path}: {e}")
         return None
 
-def standardize_dataframe_columns(df, filename, harmonization_map):
+def standardize_dataframe_columns(df: pl.DataFrame, filename: str, harmonization_map: list):
     """
-    Renames columns in a DataFrame to canonical names based on the harmonization map.
-    Returns a new DataFrame with standardized column names.
+    Renames columns in a Polars DataFrame to canonical names based on the harmonization map.
+    Returns a new DataFrame with standardized column names and only canonical features.
     """
-    renaming_map = {}
-    for feature_group in harmonization_map:
-        canonical_name = feature_group["canonical_name"]
-        original_cols = feature_group["original_columns"].get(filename, [])
-        for col in original_cols:
-            if col in df.columns:
-                renaming_map[col] = canonical_name
-    
-    # Create a new DataFrame with only the canonical columns, in a consistent order
-    standardized_df = pd.DataFrame()
+    # Create a list of expressions for selecting and renaming columns
+    select_exprs = []
     for feature_group in harmonization_map:
         canonical_name = feature_group["canonical_name"]
         original_cols = feature_group["original_columns"].get(filename, [])
         
-        # Find the first matching original column in the DataFrame
-        found_col = None
+        found_col_expr = None
         for col in original_cols:
             if col in df.columns:
-                found_col = col
+                found_col_expr = pl.col(col).alias(canonical_name)
                 break
         
-        if found_col:
-            standardized_df[canonical_name] = df[found_col]
+        if found_col_expr is not None:
+            select_exprs.append(found_col_expr)
         else:
-            # If no original column is found for this canonical feature in this file, add a column of NaNs
-            standardized_df[canonical_name] = pd.NA
+            # If no original column is found, add a null column with the canonical name
+            select_exprs.append(pl.lit(None).alias(canonical_name))
 
-    return standardized_df
+    return df.select(select_exprs)
 
-def get_unique_values_for_canonical_feature(harmonization_map, canonical_feature_name, data_folder_path):
+def get_unique_values_for_canonical_feature(harmonization_map: list, canonical_feature_name: str, data_folder_path: str):
     """
     Retrieves all unique values for a given canonical feature across all relevant datasets.
     """
@@ -83,10 +82,10 @@ def get_unique_values_for_canonical_feature(harmonization_map, canonical_feature
                 file_path = os.path.join(data_folder_path, filename)
                 df = read_dataset(file_path)
                 if df is not None:
-                    # Standardize columns before extracting values
                     standardized_df = standardize_dataframe_columns(df, filename, harmonization_map)
                     if canonical_feature_name in standardized_df.columns:
-                        unique_values.update(standardized_df[canonical_feature_name].dropna().astype(str).unique())
+                        # Use .unique() on the Series and convert to string for consistency
+                        unique_values.update(standardized_df[canonical_feature_name].cast(pl.Utf8).unique().to_list())
                     else:
                         print(f"Warning: Canonical column '{canonical_feature_name}' not found in standardized DataFrame for '{filename}'.")
             break
@@ -96,47 +95,44 @@ def get_unique_values_for_canonical_feature(harmonization_map, canonical_feature
 
     return sorted(list(unique_values))
 
-def merge_datasets_by_canonical_key(harmonization_map, data_folder_path, merge_key_canonical_name):
+def merge_datasets_by_canonical_key(harmonization_map: list, data_folder_path: str, merge_key_canonical_name: str):
     """
     Merges all datasets in the specified folder based on a common canonical key.
-    Returns a single merged DataFrame.
+    Returns a single merged Polars DataFrame.
     """
-    merged_df = None
+    merged_pl_df = None
     all_files = [f for f in os.listdir(data_folder_path) if os.path.isfile(os.path.join(data_folder_path, f))]
 
     for filename in all_files:
         file_path = os.path.join(data_folder_path, filename)
-        df = read_dataset(file_path)
-        if df is not None:
-            standardized_df = standardize_dataframe_columns(df, filename, harmonization_map)
+        pl_df = read_dataset(file_path)
+        if pl_df is not None:
+            standardized_pl_df = standardize_dataframe_columns(pl_df, filename, harmonization_map)
             
-            if merge_key_canonical_name not in standardized_df.columns:
+            if merge_key_canonical_name not in standardized_pl_df.columns:
                 print(f"Warning: Merge key '{merge_key_canonical_name}' not found in standardized DataFrame for '{filename}'. Skipping merge for this file.")
                 continue
 
-            if merged_df is None:
-                merged_df = standardized_df
+            if merged_pl_df is None:
+                merged_pl_df = standardized_pl_df
             else:
-                # Perform an outer merge to keep all data, aligning on the canonical merge key
-                merged_df = pd.merge(merged_df, standardized_df, on=merge_key_canonical_name, how='outer', suffixes=('_x', '_y'))
-                # Handle duplicate columns introduced by merge (e.g., if two files have 'DrugName' and it's not the merge key)
-                # This is a basic handling; more sophisticated logic might be needed for complex merges
-                cols_to_drop = [col for col in merged_df.columns if col.endswith(('_x', '_y')) and col[:-2] != merge_key_canonical_name]
-                merged_df.drop(columns=cols_to_drop, inplace=True)
+                # Polars join, handling potential duplicate columns by selecting distinct ones
+                # This is a simplified approach; more complex scenarios might need careful column selection
+                merged_pl_df = merged_pl_df.join(standardized_pl_df, on=merge_key_canonical_name, how='outer', suffix=f"_from_{filename.replace('.', '_')}")
+                
+    return merged_pl_df
 
-    return merged_df
-
-def filter_dataframe_by_canonical_value(df, canonical_feature_name, value):
+def filter_dataframe_by_canonical_value(df: pl.DataFrame, canonical_feature_name: str, value: str):
     """
-    Filters a DataFrame based on a specific value in a canonical feature column.
+    Filters a Polars DataFrame based on a specific value in a canonical feature column.
     Assumes the DataFrame already has canonical column names.
     """
     if canonical_feature_name not in df.columns:
         print(f"Error: Canonical feature '{canonical_feature_name}' not found in the DataFrame.")
-        return pd.DataFrame() # Return empty DataFrame
+        return pl.DataFrame() # Return empty DataFrame
     
-    # Ensure the value is treated as string for comparison, especially for mixed types
-    return df[df[canonical_feature_name].astype(str) == str(value)]
+    # Cast to Utf8 for consistent string comparison
+    return df.filter(pl.col(canonical_feature_name).cast(pl.Utf8) == value)
 
 def main():
     parser = argparse.ArgumentParser(description="Perform data manipulation based on a harmonization map.")
@@ -182,12 +178,12 @@ def main():
             return
         print(f"Merging datasets by canonical key: '{args.canonical_feature}'...")
         merged_df = merge_datasets_by_canonical_key(harmonization_map, args.data_folder_path, args.canonical_feature)
-        if merged_df is not None and not merged_df.empty:
+        if merged_df is not None and not merged_df.is_empty():
             print("Merged DataFrame (first 5 rows):")
-            print(merged_df.head().to_markdown(index=False))
+            print(merged_df.head().to_pandas().to_markdown(index=False)) # Convert to pandas for markdown printing
             print(f"\nMerged DataFrame shape: {merged_df.shape}")
             # You might want to save this merged_df to a file here
-            # e.g., merged_df.to_csv("merged_data.csv", index=False)
+            # e.g., merged_df.write_csv("merged_data.csv")
         else:
             print("No data merged or merged DataFrame is empty.")
 
@@ -199,8 +195,6 @@ def main():
         # For filtering, we need to merge all data first to have a single DataFrame to filter
         print(f"Merging all datasets to filter by '{args.canonical_feature}' == '{args.filter_value}'...")
         # A common merge key might be needed here, or merge all and then filter
-        # For simplicity, let's assume we merge all data first for filtering example
-        # In a real scenario, you might want to load and standardize a single file if filtering only that.
         # For this example, we'll merge all data using the first canonical feature as a dummy merge key if no specific merge key is provided.
         dummy_merge_key = harmonization_map[0]["canonical_name"] if harmonization_map else None
         if not dummy_merge_key:
@@ -209,12 +203,12 @@ def main():
 
         all_data_df = merge_datasets_by_canonical_key(harmonization_map, args.data_folder_path, dummy_merge_key)
         
-        if all_data_df is not None and not all_data_df.empty:
+        if all_data_df is not None and not all_data_df.is_empty():
             print(f"Filtering DataFrame by '{args.canonical_feature}' == '{args.filter_value}'...")
             filtered_df = filter_dataframe_by_canonical_value(all_data_df, args.canonical_feature, args.filter_value)
-            if not filtered_df.empty:
+            if not filtered_df.is_empty():
                 print("Filtered DataFrame (first 5 rows):")
-                print(filtered_df.head().to_markdown(index=False))
+                print(filtered_df.head().to_pandas().to_markdown(index=False)) # Convert to pandas for markdown printing
                 print(f"\nFiltered DataFrame shape: {filtered_df.shape}")
                 # You might want to save this filtered_df to a file here
             else:
