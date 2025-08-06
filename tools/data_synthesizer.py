@@ -29,24 +29,24 @@ def synthesize_analyses(all_analyses, additional_prompt=""):
     Example JSON structure:
     ```json
     [
-      {
+      {{
         "canonical_name": "drug_id",
         "semantic_meaning": "Unique identifier for a drug.",
         "data_type": "Integer",
-        "original_columns": {
+        "original_columns": {{
           "dataset1.csv": ["DRUG_ID_1", "DRUG_ID_A"],
           "dataset2.xlsx": ["DrugID"]
-        }
-      },
-      {
+        }}
+      }},
+      {{
         "canonical_name": "patient_age",
         "semantic_meaning": "Age of the patient.",
         "data_type": "Integer",
-        "original_columns": {
+        "original_columns": {{
           "dataset1.csv": ["Age"],
           "dataset3.csv": ["PatientAge", "Age_Years"]
-        }
-      }
+        }}
+      }}
     ]
     ```
 
