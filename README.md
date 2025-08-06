@@ -83,27 +83,53 @@ Follow these steps to set up and run the Dataset Analyzer on your local machine.
 
 ## Usage
 
-To analyze your datasets, simply run the `main.py` script and provide the path to the folder containing your dataset files.
+### 1. Generate Harmonization Map
+
+To analyze your datasets and generate the harmonization map, run the `main.py` script. You can optionally save the output JSON to a file using the `--output_json` argument.
 
 ```bash
-python main.py <path_to_your_dataset_folder> [--prompt "Your additional instructions here"]
+python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] [--prompt "Your additional instructions here"]
 ```
 
 **Example:**
 
-If your datasets are located in a folder named `my_data` within the project directory:
+If your datasets are located in a folder named `my_data` within the project directory, and you want to save the harmonization map to `harmonization_map.json`:
 
 ```bash
-python main.py my_data
+python main.py my_data --output_json harmonization_map.json
 ```
 
-To include additional instructions for the synthesis phase:
+This will print the JSON harmonization map to the console and save it to the specified file.
+
+### 2. Use Data Harmonizer for Manipulation
+
+Once you have generated the `harmonization_map.json` file, you can use the `data_harmonizer.py` script to perform various data manipulation tasks, such as extracting unique values for a canonical feature.
 
 ```bash
-python main.py my_data --prompt "Also, provide a brief summary of the most important findings."
+python tools/data_harmonizer.py <harmonization_map_path> <canonical_feature_name> <data_folder_path>
 ```
 
-The script will process each dataset, perform individual and cross-dataset analysis, and then print a detailed harmonization report directly to your console.
+-   `<harmonization_map_path>`: Path to the JSON file containing the harmonization map (e.g., `harmonization_map.json`).
+-   `<canonical_feature_name>`: The standardized name of the feature you want to analyze (e.g., `drug_id`, `cell_line_name`).
+-   `<data_folder_path>`: Path to the folder containing your original datasets.
+
+**Example:**
+
+To get all unique drug IDs from your datasets using the generated `harmonization_map.json`:
+
+```bash
+python data_harmonizer.py harmonization_map.json drug_id my_data
+```
+
+This will output a list of all unique values found for the `drug_id` canonical feature across all relevant datasets.
+
+## Contributing
+
+Contributions are welcome! If you have suggestions for improvements, bug fixes, or new features, please feel free to open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
