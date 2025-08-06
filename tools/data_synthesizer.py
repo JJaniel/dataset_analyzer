@@ -2,7 +2,7 @@ import json
 from langchain.prompts import PromptTemplate
 from tools.llm_manager import get_llm_response
 
-def synthesize_analyses(all_analyses, additional_prompt=""):
+def synthesize_analyses(all_analyses, additional_prompt="", llm_providers=None):
     """
     Synthesizes analyses from multiple datasets to find common features.
     """
@@ -59,7 +59,7 @@ def synthesize_analyses(all_analyses, additional_prompt=""):
     }
 
     try:
-        result_content = get_llm_response(template, input_variables)
+        result_content = get_llm_response(template, input_variables, llm_providers)
         cleaned_result = result_content.strip().replace("```json", "").replace("```", "")
         return json.loads(cleaned_result)
     except Exception as e:

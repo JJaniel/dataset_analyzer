@@ -26,7 +26,35 @@ def get_dataset_sample(file_path):
         print(f"Error reading {file_path}: {e}")
         return None
 
-def analyze_individual_dataset(file_path, df):
+def parse_json_with_fix(json_string, retries=3):
+    """
+    Attempts to parse a JSON string, with retries and basic fixing for common issues.
+    """
+    for i in range(retries):
+        try:
+            return json.loads(json_string)
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error (attempt {i+1}/{retries}): {e}")
+            # Attempt to fix common issues
+            if "Unterminated string" in str(e) or "Expecting ',' delimiter" in str(e):
+                if json_string.endswith('}'):
+                    json_string += ']' # Try to close an array
+                elif json_string.endswith(']'):
+                    json_string += '}' # Try to close an object
+                else:
+                    json_string += '}' # Default to closing an object
+            elif "Expecting property name enclosed in double quotes" in str(e):
+                # This is harder to fix automatically without more context
+                pass
+            
+            if i < retries - 1:
+                print("Attempting to fix JSON and retry...")
+            else:
+                raise # Re-raise if all retries fail
+
+    return json.loads(json_string) # Should not be reached if retries fail
+
+def analyze_individual_dataset(file_path, df, llm_providers):
     """
     Analyzes a single dataset to understand its structure and semantic meaning.
     """
@@ -65,10 +93,10 @@ def analyze_individual_dataset(file_path, df):
     }
 
     try:
-        result_content = get_llm_response(template, input_variables)
+        result_content = get_llm_response(template, input_variables, llm_providers)
         # Clean the output to ensure it's valid JSON
         cleaned_result = result_content.strip().replace("```json", "").replace("```", "")
-        return json.loads(cleaned_result)
+        return parse_json_with_fix(cleaned_result)
     except Exception as e:
         print(f"An error occurred during individual analysis of {file_path}: {e}")
         return None
@@ -82,11 +110,14 @@ def main():
     parser.add_argument("--prompt", type=str, default="",
                         help="Additional prompt to include in the synthesis phase for custom requirements.")
     parser.add_argument("--output_json", type=str, help="Optional: Path to save the harmonization map JSON output.")
+    parser.add_argument("--llm_providers", type=str, default="google,nvidia,groq",
+                        help="Comma-separated list of LLM providers to use, in order of preference (e.g., 'google,nvidia,groq').")
     args = parser.parse_args()
 
     folder_path = args.folder_path
     additional_prompt = args.prompt
     output_json_path = args.output_json
+    llm_providers = [p.strip() for p in args.llm_providers.split(',')]
 
     if not os.path.isdir(folder_path):
         print(f"Error: The path '{folder_path}' is not a valid directory.")
@@ -100,7 +131,7 @@ def main():
             print(f"Analyzing {filename}...")
             df = get_dataset_sample(file_path)
             if df is not None:
-                analysis = analyze_individual_dataset(file_path, df)
+                analysis = analyze_individual_dataset(file_path, df, llm_providers)
                 if analysis:
                     all_analyses[filename] = analysis
 
@@ -110,7 +141,7 @@ def main():
 
     print("\n--- Phase 2: Cross-Dataset Synthesis ---")
     print("Synthesizing results to find common features...")
-    harmonization_map = synthesize_analyses(all_analyses, additional_prompt)
+    harmonization_map = synthesize_analyses(all_analyses, additional_prompt, llm_providers)
 
     if isinstance(harmonization_map, str):
         print(f"Error during synthesis: {harmonization_map}")

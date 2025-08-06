@@ -1,3 +1,19 @@
+Metadata-Version: 2.4
+Name: dataset-analyzer
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: pandas
+Requires-Dist: langchain-google-genai
+Requires-Dist: langchain
+Requires-Dist: langchain-core
+Requires-Dist: python-dotenv
+Requires-Dist: openpyxl
+Requires-Dist: openai
+Requires-Dist: groq
+Requires-Dist: google-generativeai
+
 # Dataset Analyzer
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)
@@ -88,17 +104,7 @@ Follow these steps to set up and run the Dataset Analyzer on your local machine.
 To analyze your datasets and generate the harmonization map, run the `main.py` script. You can optionally save the output JSON to a file using the `--output_json` argument.
 
 ```bash
-python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] [--prompt "Your additional instructions here"] [--llm_providers "provider1,provider2,..."]
-```
-
--   `--llm_providers`: Optional. A comma-separated list of LLM providers to use, in order of preference. Supported providers are `google`, `nvidia`, and `groq`. If not specified, the default order is `google,nvidia,groq`.
-
-**Example:**
-
-To use only NVIDIA and Groq, in that order:
-
-```bash
-python main.py my_data --llm_providers "nvidia,groq"
+python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] [--prompt "Your additional instructions here"]
 ```
 
 **Example:**

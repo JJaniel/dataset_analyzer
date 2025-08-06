@@ -13,6 +13,7 @@ dependencies = [
     "openpyxl",
     "openai",
     "groq",
+    "google-generativeai",
 ]
 
 [tool.setuptools.packages.find]
