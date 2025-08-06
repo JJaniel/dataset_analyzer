@@ -77,11 +77,11 @@ def analyze_individual_dataset(file_path, df):
         print(f"An error occurred during individual analysis of {file_path}: {e}")
         return None
 
-def synthesize_analyses(all_analyses):
+def synthesize_analyses(all_analyses, additional_prompt=""):
     """
     Synthesizes analyses from multiple datasets to find common features.
     """
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
     
     template = """
     You are a research assistant. Your goal is to harmonize multiple dataset analyses to help a researcher understand how their data fits together.
@@ -92,28 +92,35 @@ def synthesize_analyses(all_analyses):
     Based on the provided analyses, perform the following tasks and provide the output in a clear, final report format:
     1.  **Identify Feature Groups**: Group together column names from different files that you believe are semantically identical (i.e., they represent the same real-world feature).
     2.  **Suggest Canonical Names**: For each group, suggest a single, standardized "canonical" name.
-    3.  **Provide an Overall Summary**: Briefly describe the combined information available across all datasets and suggest what kind of research might be possible with this combined data.
 
     Do not output JSON. Format the output as a human-readable report.
+
+    {additional_prompt}
     """
 
-    prompt = PromptTemplate(template=template, input_variables=["analyses_json"])
+    prompt = PromptTemplate(template=template, input_variables=["analyses_json", "additional_prompt"])
     chain = prompt | llm
 
     try:
         analyses_str = json.dumps(all_analyses, indent=2)
-        result = chain.invoke({"analyses_json": analyses_str})
+        result = chain.invoke({"analyses_json": analyses_str, "additional_prompt": additional_prompt})
         return result.content
     except Exception as e:
         return f"An error occurred during synthesis: {e}"
 
 def main():
-    """The main function to run the multi-dataset analysis."""
+    """
+    The main function to run the multi-dataset analysis.
+    """
     parser = argparse.ArgumentParser(description="Analyze and harmonize multiple datasets in a folder.")
     parser.add_argument("folder_path", type=str, help="The path to the folder containing your datasets.")
+    parser.add_argument("--prompt", type=str, default="",
+                        help="Additional prompt to include in the synthesis phase for custom requirements.")
     args = parser.parse_args()
 
     folder_path = args.folder_path
+    additional_prompt = args.prompt
+
     if not os.path.isdir(folder_path):
         print(f"Error: The path '{folder_path}' is not a valid directory.")
         return
@@ -136,10 +143,11 @@ def main():
 
     print("\n--- Phase 2: Cross-Dataset Synthesis ---")
     print("Synthesizing results to find common features...")
-    final_report = synthesize_analyses(all_analyses)
+    final_report = synthesize_analyses(all_analyses, additional_prompt)
 
     print("\n--- Final Report ---")
     print(final_report)
 
 if __name__ == "__main__":
     main()
+

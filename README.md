@@ -86,7 +86,7 @@ Follow these steps to set up and run the Dataset Analyzer on your local machine.
 To analyze your datasets, simply run the `main.py` script and provide the path to the folder containing your dataset files.
 
 ```bash
-python main.py <path_to_your_dataset_folder>
+python main.py <path_to_your_dataset_folder> [--prompt "Your additional instructions here"]
 ```
 
 **Example:**
@@ -95,6 +95,12 @@ If your datasets are located in a folder named `my_data` within the project dire
 
 ```bash
 python main.py my_data
+```
+
+To include additional instructions for the synthesis phase:
+
+```bash
+python main.py my_data --prompt "Also, provide a brief summary of the most important findings."
 ```
 
 The script will process each dataset, perform individual and cross-dataset analysis, and then print a detailed harmonization report directly to your console.
