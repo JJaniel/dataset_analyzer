@@ -138,7 +138,8 @@ python tools/data_manipulator.py <harmonization_map_path> <data_folder_path> --a
 
 -   `<harmonization_map_path>`: Path to the JSON file containing the harmonization map (e.g., `harmonization_map.json`).
 -   `<data_folder_path>`: Path to the folder containing your original datasets.
--   `--action <action_type>`: The type of data manipulation to perform. Choose from: `unique_values`, `merge`, or `filter`.
+-   `--action <action_type>`: The type of data manipulation to perform. Choose from: `unique_values`, `merge`, `filter`, or `llm_guided_manipulation`.
+-   `--request <natural_language_request>`: Required for the `llm_guided_manipulation` action. Your natural language description of the data manipulation you want to perform.
 -   `--canonical_feature <feature_name>`: Required for `unique_values` and `filter` actions, and for specifying the merge key in the `merge` action. This is the standardized name of the feature you want to work with (e.g., `DrugID`, `CellLine`).
 -   `--filter_value <value>`: Required for the `filter` action. The specific value to filter by.
 

@@ -217,7 +217,6 @@ name = "dataset-analyzer"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "google-generativeai" },
     { name = "groq" },
     { name = "langchain" },
     { name = "langchain-core" },
@@ -225,12 +224,12 @@ dependencies = [
     { name = "openai" },
     { name = "openpyxl" },
     { name = "pandas" },
+    { name = "polars" },
     { name = "python-dotenv" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "google-generativeai" },
     { name = "groq" },
     { name = "langchain" },
     { name = "langchain-core" },
@@ -238,6 +237,7 @@ requires-dist = [
     { name = "openai" },
     { name = "openpyxl" },
     { name = "pandas" },
+    { name = "polars" },
     { name = "python-dotenv" },
 ]
 
@@ -1176,6 +1176,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/74/7e817b31413fbb96366ea327d43d1926a9c48c58074e27e094e2839a0e36/pandas-2.3.1-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:09e3b1587f0f3b0913e21e8b32c3119174551deb4a4eba4a89bc7377947977e7", size = 13225086, upload-time = "2025-07-07T19:19:56.378Z" },
     { url = "https://files.pythonhosted.org/packages/1f/0f/bc0a44b47eba2f22ae4235719a573d552ef7ad76ed3ea39ae62d554e040b/pandas-2.3.1-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:2323294c73ed50f612f67e2bf3ae45aea04dce5690778e08a09391897f35ff88", size = 13871698, upload-time = "2025-07-07T19:19:58.854Z" },
     { url = "https://files.pythonhosted.org/packages/fa/cb/6c32f8fadefa4314b740fbe8f74f6a02423bd1549e7c930826df35ac3c1b/pandas-2.3.1-cp39-cp39-win_amd64.whl", hash = "sha256:b4b0de34dc8499c2db34000ef8baad684cfa4cbd836ecee05f323ebfba348c7d", size = 11357186, upload-time = "2025-07-07T19:20:01.475Z" },
+]
+
+[[package]]
+name = "polars"
+version = "1.32.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/55/bd/a9fe11f19e35ddee9e6b7c279653f503d60f0919389117c76f4954620ac7/polars-1.32.1.tar.gz", hash = "sha256:89a60477e74b3a3ecd341bd533a181ec5fb4dacba233b45f33e7cdf0d1349a96", size = 4788864, upload-time = "2025-08-06T16:50:04.325Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/93/50/87b98e350854b3e775f71af759cfabae5793e66c151cd8b34dc7d355f3b9/polars-1.32.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:e28f3f3f1f8984a0865edc432735bf70f69a8395aaeb7dd1139e377ea3744cc3", size = 37770330, upload-time = "2025-08-06T16:49:03.477Z" },
+    { url = "https://files.pythonhosted.org/packages/21/9e/a22970f74031085de208e18175cf9fb57f03721264438c9d270721117d4c/polars-1.32.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:0584ecf34a1e4ae96646f7dce1331b8a913747a75304f0fe2244387491359afe", size = 34461906, upload-time = "2025-08-06T16:49:07.911Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/96/ecad28b30ba91d1128bbcc6d33c0b4ac60be4e35cdcbbda57f05baa3e634/polars-1.32.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:426b86325a47694ca1d91094ecf2ba98b9c29025a37e6372086b51837bffb8ef", size = 38280837, upload-time = "2025-08-06T16:49:11.05Z" },
+    { url = "https://files.pythonhosted.org/packages/10/d4/cf795532d44de73eb78f1905af4be4501f05aa3a04be1ca9e38f1a919e81/polars-1.32.1-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:91f8c3625eea2554b4c01efa0a342cbf99352166ee38ae4c81c6af26b10c2801", size = 35490716, upload-time = "2025-08-06T16:49:14.119Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/34/62f821815d37042f448bf36ca39306fa74c5a121fda599e257067d883226/polars-1.32.1-cp39-abi3-win_amd64.whl", hash = "sha256:20d62813725c47b8f794f25d523ddad69803de9f21b958fa660296bab2db005f", size = 37897286, upload-time = "2025-08-06T16:49:17.057Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/b7/4c021cd467766bfce3ff89f264f5d8f2fd1fd43e9bebad7327ddce8f4b03/polars-1.32.1-cp39-abi3-win_arm64.whl", hash = "sha256:99d54793035caf5e3d338ba7c1e636a2f896c527b9c4c8ae8e08e5213a9a287b", size = 34059105, upload-time = "2025-08-06T16:49:20.138Z" },
 ]
 
 [[package]]
