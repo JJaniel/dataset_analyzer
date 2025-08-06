@@ -127,27 +127,39 @@ python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] 
     python main.py my_data --prompt "Also, provide a brief summary of the most important findings."
     ```
 
-### 2. Use Data Harmonizer for Manipulation
+### 2. Data Manipulation with `data_manipulator.py`
 
-Once you have generated the `harmonization_map.json` file, you can use the `tools/data_harmonizer.py` script to perform various data manipulation tasks, such as extracting unique values for a canonical feature.
+Once you have generated the `harmonization_map.json` file using `main.py`, you can use the `tools/data_manipulator.py` script to perform various data manipulation tasks. This script leverages the harmonization map to understand column relationships across your datasets.
 
 ```bash
-python tools/data_harmonizer.py <harmonization_map_path> <canonical_feature_name> <data_folder_path>
+python tools/data_manipulator.py <harmonization_map_path> <data_folder_path> --action <action_type> [--canonical_feature <feature_name>] [--filter_value <value>]
 ```
 
 -   `<harmonization_map_path>`: Path to the JSON file containing the harmonization map (e.g., `harmonization_map.json`).
--   `<canonical_feature_name>`: The standardized name of the feature you want to analyze (e.g., `drug_id`, `cell_line_name`).
 -   `<data_folder_path>`: Path to the folder containing your original datasets.
+-   `--action <action_type>`: The type of data manipulation to perform. Choose from: `unique_values`, `merge`, or `filter`.
+-   `--canonical_feature <feature_name>`: Required for `unique_values` and `filter` actions, and for specifying the merge key in the `merge` action. This is the standardized name of the feature you want to work with (e.g., `DrugID`, `CellLine`).
+-   `--filter_value <value>`: Required for the `filter` action. The specific value to filter by.
 
-**Example:**
+**Examples:**
 
-To get all unique drug IDs from your datasets using the generated `harmonization_map.json`:
+-   **Get all unique values for a canonical feature (e.g., `DrugID`):**
 
-```bash
-python tools/data_harmonizer.py harmonization_map.json drug_id my_data
-```
+    ```bash
+    python tools/data_manipulator.py harmonization_map.json my_data --action unique_values --canonical_feature DrugID
+    ```
 
-This will output a list of all unique values found for the `drug_id` canonical feature across all relevant datasets.
+-   **Merge all datasets based on a canonical key (e.g., `COSMICID`):**
+
+    ```bash
+    python tools/data_manipulator.py harmonization_map.json my_data --action merge --canonical_feature COSMICID
+    ```
+
+-   **Filter merged data by a canonical feature and value (e.g., `CellLine` equals `A549`):**
+
+    ```bash
+    python tools/data_manipulator.py harmonization_map.json my_data --action filter --canonical_feature CellLine --filter_value A549
+    ```
 
 ## Contributing
 
