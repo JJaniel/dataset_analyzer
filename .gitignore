@@ -12,3 +12,6 @@ __pycache__/
 
 # uv lock file
 uv.lock
+
+# Crush directory
+.crush/

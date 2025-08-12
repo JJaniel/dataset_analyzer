@@ -12,7 +12,7 @@ This tool is invaluable for researchers, data scientists, and analysts working w
 
 ## Features
 
--   **Intelligent Semantic Analysis**: Utilizes various LLM APIs (Google Gemini, NVIDIA, Groq) to perform in-depth semantic understanding of each column within your datasets, describing its real-world meaning, data types, and suggesting potential synonyms.
+-   **Intelligent Semantic Analysis**: Utilizes various LLM APIs (Google Gemini, NVIDIA, Groq) to perform in-depth semantic understanding of each column within your datasets, describing its real-world meaning, data types, and suggesting potential synonyms. **Now includes sampling of unique values for each column to provide richer context for LLM analysis.**
 -   **Automated Data Harmonization**: Automatically identifies and groups semantically identical columns across different datasets, facilitating consistent data integration.
 -   **Canonical Naming Suggestions**: Proposes standardized, canonical names for grouped features, promoting clarity and uniformity in your data schema.
 -   **Comprehensive Synthesis Report**: Generates a structured JSON report summarizing the combined information across all analyzed datasets, highlighting data relationships.
@@ -21,7 +21,7 @@ This tool is invaluable for researchers, data scientists, and analysts working w
 -   **Robust LLM Output Parsing**: Improved handling of LLM responses, ensuring accurate JSON parsing even with varied output formats.
 -   **Robust LLM Fallback**: Implements a fallback mechanism to seamlessly switch between LLM providers (Google, NVIDIA, Groq) if one fails or hits rate limits, ensuring continuous operation.
 -   **Configurable LLM Providers**: Allows users to specify the order of LLM providers to use via command-line arguments, offering flexibility and control.
--   **Data Manipulation with Polars**: The `data_manipulator.py` script now leverages Polars for high-performance data reading, column standardization, merging, and filtering, offering significant speed improvements for large datasets.
+-   **Data Manipulation with Polars**: The `data_manipulator.py` script now leverages Polars for high-performance data reading, column standardization, merging, and filtering, offering significant speed improvements for large datasets. **Updated merge operations to use `how='full'` for clearer and more robust data integration.**
 
 ## Getting Started
 
@@ -31,6 +31,7 @@ Follow these steps to set up and run the Dataset Analyzer on your local machine.
 
 -   Python 3.9 or higher.
 -   `uv` package manager (recommended for fast and reliable dependency management).
+-   `tabulate` (required for displaying merged data in markdown format).
 
 ### Installation
 

@@ -3,9 +3,10 @@ import json
 import os
 import argparse
 from tools.llm_manager import get_llm_response
-from tools.data_analyzer import analyze_individual_dataset, get_dataset_sample
+from tools.data_analyzer import analyze_individual_dataset
 from tools.data_synthesizer import synthesize_analyses
 from langchain.prompts import PromptTemplate
+from tools.utils import read_dataset_sample
 
 import inspect
 
@@ -214,11 +215,11 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
 
     The harmonization map for the current datasets is provided below. You MUST use the `canonical_name` values from this map when referring to features in your plan. Do NOT use original column names or make up new canonical names.
 
-    Harmonization Map: {harmonization_map_json}
+Harmonization Map: {harmonization_map_json}
 
-    When the user asks to find unique values for a canonical feature across all datasets, you should directly use the `get_unique_values_for_canonical_feature` function. Do NOT attempt to merge datasets first for this specific type of request, as it can be inefficient.
+When the user asks to find unique values for a canonical feature across all datasets, you should directly use the `get_unique_values_for_canonical_feature` function. Do NOT attempt to merge datasets first for this specific type of request, as it can be inefficient.
 
-    Example Plan (Get Unique Values for a Canonical Feature):
+Example Plan (Get Unique Values for a Canonical Feature):
     ```json
     [
       {{
@@ -233,7 +234,7 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
     ]
     ```
 
-    Example Plan (Merge and then Filter):
+Example Plan (Merge and then Filter):
     ```json
     [
       {{
@@ -257,7 +258,7 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
     ]
     ```
 
-    User Request: {user_request}
+User Request: {user_request}
     """
 
     planner_prompt = PromptTemplate(template=available_functions_description, input_variables=["user_request", "harmonization_map_json"])
@@ -416,9 +417,9 @@ def main():
             file_path = os.path.join(args.data_folder_path, filename)
             if os.path.isfile(file_path):
                 print(f"Analyzing {filename}...")
-                df = get_dataset_sample(file_path)
-                if df is not None:
-                    analysis = analyze_individual_dataset(file_path, df, [p.strip() for p in args.llm_providers.split(',')])
+                df_sample = read_dataset_sample(file_path)
+                if df_sample is not None:
+                    analysis = analyze_individual_dataset(file_path, df_sample, [p.strip() for p in args.llm_providers.split(',')])
                     if analysis:
                         all_analyses[filename] = analysis
 

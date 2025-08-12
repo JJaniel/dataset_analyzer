@@ -6,8 +6,8 @@ from tools.llm_manager import get_llm_response
 from dotenv import load_dotenv
 import json
 from tools.data_synthesizer import synthesize_analyses
-from tools.data_analyzer import analyze_individual_dataset, get_dataset_sample
-from tools.utils import parse_json_with_fix
+from tools.data_analyzer import analyze_individual_dataset
+from tools.utils import parse_json_with_fix, read_dataset_sample
 
 def main():
     """
@@ -38,8 +38,8 @@ def main():
         file_path = os.path.join(folder_path, filename)
         if os.path.isfile(file_path):
             print(f"Analyzing {filename}...")
-            df = get_dataset_sample(file_path)
-            if df is not None:
+            df_sample = read_dataset_sample(file_path)
+            if df_sample is not None:
                 metadata_content = None
                 base_filename, _ = os.path.splitext(filename)
                 METADATA_EXTENSIONS = ['.json', '.txt', '.yaml', '.yml', '.md'] # Common metadata extensions
@@ -56,7 +56,7 @@ def main():
                         except Exception as e:
                             print(f"  Error reading metadata file {metadata_filename}: {e}")
 
-                analysis = analyze_individual_dataset(file_path, df, llm_providers, metadata_content)
+                analysis = analyze_individual_dataset(file_path, df_sample, llm_providers, metadata_content)
                 if analysis:
                     all_analyses[filename] = analysis
 

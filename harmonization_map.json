@@ -1,0 +1,243 @@
+[
+  {
+    "canonical_name": "cosmic_id",
+    "semantic_meaning": "Unique identifier for a cancer cell line from the COSMIC database.",
+    "data_type": "Integer",
+    "original_columns": {
+      "CCLE_fitted_Response.csv": [
+        "COSMIC_ID"
+      ],
+      "CTRP_fitted_Response.csv": [
+        "COSMIC_ID"
+      ],
+      "GDSC1_fitted_response.csv": [
+        "COSMIC_ID"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "COSMIC_ID"
+      ]
+    }
+  },
+  {
+    "canonical_name": "cell_line_name",
+    "semantic_meaning": "Name of the cancer cell line.",
+    "data_type": "String",
+    "original_columns": {
+      "CCLE_fitted_Response.csv": [
+        "CELL_LINE_NAME"
+      ],
+      "CTRP_fitted_Response.csv": [
+        "CELL_LINE"
+      ],
+      "GDSC1_fitted_response.csv": [
+        "CELL_LINE"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "CELL_LINE"
+      ]
+    }
+  },
+  {
+    "canonical_name": "drug_name",
+    "semantic_meaning": "Name of the drug used in the experiment.",
+    "data_type": "String",
+    "original_columns": {
+      "CCLE_fitted_Response.csv": [
+        "DRUG_NAME"
+      ],
+      "CTRP_fitted_Response.csv": [
+        "DRUG_NAME"
+      ],
+      "GDSC1_fitted_response.csv": [
+        "DRUG_NAME"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "DRUG_NAME"
+      ]
+    }
+  },
+  {
+    "canonical_name": "ccle_ic50_umol",
+    "semantic_meaning": "IC50 value (in uMol) from the CCLE database.",
+    "data_type": "Float",
+    "original_columns": {
+      "CCLE_fitted_Response.csv": [
+        "CCLE IC50 uMol"
+      ]
+    }
+  },
+  {
+    "canonical_name": "ccle_actarea",
+    "semantic_meaning": "Activity area from the CCLE assay.",
+    "data_type": "Float",
+    "original_columns": {
+      "CCLE_fitted_Response.csv": [
+        "CCLE ActArea"
+      ]
+    }
+  },
+  {
+    "canonical_name": "gdsc_ic50_umol",
+    "semantic_meaning": "IC50 value (in uMol) from the GDSC database.",
+    "data_type": "Float",
+    "original_columns": {
+      "CCLE_fitted_Response.csv": [
+        "GDSC IC50 uMol"
+      ]
+    }
+  },
+  {
+    "canonical_name": "gdsc_auc",
+    "semantic_meaning": "AUC value from the GDSC database.",
+    "data_type": "Float",
+    "original_columns": {
+      "CCLE_fitted_Response.csv": [
+        "GDSC AUC"
+      ],
+      "CTRP_fitted_Response.csv": [
+        "GDSC_AUC"
+      ]
+    }
+  },
+  {
+    "canonical_name": "ctrp_auc",
+    "semantic_meaning": "AUC value from the CTRP database.",
+    "data_type": "Float",
+    "original_columns": {
+      "CTRP_fitted_Response.csv": [
+        "CTRP_AUC"
+      ]
+    }
+  },
+  {
+    "canonical_name": "gdsc_drug_id",
+    "semantic_meaning": "Unique identifier for a drug within the GDSC database.",
+    "data_type": "Integer",
+    "original_columns": {
+      "CTRP_fitted_Response.csv": [
+        "GDSC_DRUG_ID"
+      ]
+    }
+  },
+  {
+    "canonical_name": "ctrp_drug_id",
+    "semantic_meaning": "Unique identifier for a drug within the CTRP database.",
+    "data_type": "Integer",
+    "original_columns": {
+      "CTRP_fitted_Response.csv": [
+        "CTRP_DRUG_ID"
+      ]
+    }
+  },
+  {
+    "canonical_name": "gdsc_ic50",
+    "semantic_meaning": "IC50 value from the GDSC database.",
+    "data_type": "Float",
+    "original_columns": {
+      "CTRP_fitted_Response.csv": [
+        "GDSC_IC50"
+      ]
+    }
+  },
+  {
+    "canonical_name": "drug_id",
+    "semantic_meaning": "Unique identifier for a drug.",
+    "data_type": "Integer",
+    "original_columns": {
+      "GDSC1_fitted_response.csv": [
+        "DRUG_ID"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "DRUG_ID"
+      ]
+    }
+  },
+  {
+    "canonical_name": "putative_target",
+    "semantic_meaning": "The primary biological target of the drug.",
+    "data_type": "String",
+    "original_columns": {
+      "GDSC1_fitted_response.csv": [
+        "PUTATIVE_TARGET"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "PUTATIVE_TARGET"
+      ]
+    }
+  },
+  {
+    "canonical_name": "pathway_name",
+    "semantic_meaning": "The biological pathway the target is involved in.",
+    "data_type": "String",
+    "original_columns": {
+      "GDSC1_fitted_response.csv": [
+        "PATHWAY_NAME"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "PATHWAY_NAME"
+      ]
+    }
+  },
+  {
+    "canonical_name": "ln_ic50",
+    "semantic_meaning": "The natural logarithm of the IC50 value.",
+    "data_type": "Float",
+    "original_columns": {
+      "GDSC1_fitted_response.csv": [
+        "LN_IC50"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "LN_IC50"
+      ]
+    }
+  },
+  {
+    "canonical_name": "ic50",
+    "semantic_meaning": "The half maximal inhibitory concentration (IC50) of the drug.",
+    "data_type": "Float",
+    "original_columns": {
+      "GDSC1_fitted_response.csv": [
+        "IC50"
+      ]
+    }
+  },
+  {
+    "canonical_name": "auc",
+    "semantic_meaning": "The area under the curve of a dose-response curve.",
+    "data_type": "Float",
+    "original_columns": {
+      "GDSC1_fitted_response.csv": [
+        "AUC"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "AUC"
+      ]
+    }
+  },
+  {
+    "canonical_name": "rmse",
+    "semantic_meaning": "The root mean squared error of the model.",
+    "data_type": "Float",
+    "original_columns": {
+      "GDSC1_fitted_response.csv": [
+        "RMSE"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "RMSE"
+      ]
+    }
+  },
+  {
+    "canonical_name": "z_score",
+    "semantic_meaning": "A standardized score representing the sensitivity of the cell line to the drug.",
+    "data_type": "Float",
+    "original_columns": {
+      "GDSC1_fitted_response.csv": [
+        "Z_SCORE"
+      ],
+      "GDSC2_fitted_Response.csv": [
+        "Z_SCORE"
+      ]
+    }
+  }
+]
