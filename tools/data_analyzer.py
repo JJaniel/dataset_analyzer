@@ -4,6 +4,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 import json
 from tools.llm_manager import get_llm_response
+from tools.utils import parse_json_with_fix
 
 def get_dataset_sample(file_path):
     """
@@ -22,49 +23,44 @@ def get_dataset_sample(file_path):
         print(f"Error reading {file_path}: {e}")
         return None
 
-def analyze_individual_dataset(file_path, df, llm_providers):
+def analyze_individual_dataset(file_path, df, llm_providers, metadata_content=None):
     """
     Analyzes a single dataset to understand its structure and semantic meaning.
     """
-    template = """
+    metadata_instruction = ""
+    if metadata_content:
+        metadata_instruction = f"\n\nAdditional Metadata (if available and relevant):\n{{metadata_content}}"
+
+    template = f"""
     You are a data analyst. Your task is to perform a deep semantic analysis of the following dataset sample.
 
-    Dataset File: {file_name}
+    Dataset File: {{file_name}}
     Sample Data:
-    {dataset_sample}
+    {{dataset_sample}}
+    {metadata_instruction}
 
     Your analysis should be in JSON format and include:
     1.  **semantic_meaning**: For each column, describe what it likely represents in the real world.
     2.  **data_types_and_content**: Briefly describe the data type and content of each column.
     3.  **potential_synonyms**: Suggest alternative names for columns that might appear in other datasets.
 
-    Example Output:
-    {{
-        "col1": {{
-            "semantic_meaning": "A unique identifier for a user.",
-            "data_types_and_content": "Integer.",
-            "potential_synonyms": ["user_id", "customer_id"]
-        }},
-        "col2": {{
-            "semantic_meaning": "The age of the user.",
-            "data_types_and_content": "Integer.",
-            "potential_synonyms": ["age", "user_age"]
-        }}
-    }}
-
-    Provide only the JSON output.
+    Provide only the JSON output, with no additional text or markdown formatting.
     """
 
     input_variables = {
         "file_name": os.path.basename(file_path),
         "dataset_sample": df.to_string()
     }
+    if metadata_content:
+        input_variables["metadata_content"] = metadata_content
+
 
     try:
         result_content = get_llm_response(template, input_variables, llm_providers)
-        # Clean the output to ensure it's valid JSON
+        print(f"Raw LLM response: {result_content}") # Debugging line
         cleaned_result = result_content.strip().replace("```json", "").replace("```", "")
-        return json.loads(cleaned_result)
+        # Use the robust JSON parser from main.py
+        return parse_json_with_fix(cleaned_result)
     except Exception as e:
         print(f"An error occurred during individual analysis of {file_path}: {e}")
         return None

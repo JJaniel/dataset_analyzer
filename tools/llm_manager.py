@@ -11,7 +11,7 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
     """
     Attempts to get a response from an LLM, with fallback mechanisms.
     """
-    llm_providers = providers_to_try if providers_to_try is not None else ["google", "nvidia", "groq"]
+    llm_providers = providers_to_try if providers_to_try is not None else ["groq", "google", "nvidia"] # Prioritize Groq
 
     for provider in llm_providers:
         print(f"Attempting to use {provider.capitalize()} LLM...")

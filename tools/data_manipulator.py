@@ -5,6 +5,9 @@ import argparse
 from tools.llm_manager import get_llm_response
 from tools.data_analyzer import analyze_individual_dataset, get_dataset_sample
 from tools.data_synthesizer import synthesize_analyses
+from langchain.prompts import PromptTemplate
+
+import inspect
 
 def load_harmonization_map(json_file_path):
     """
@@ -26,7 +29,7 @@ def read_dataset(file_path):
     """
     try:
         if file_path.endswith('.csv'):
-            return pl.read_csv(file_path)
+            return pl.read_csv(file_path, ignore_errors=True)
         elif file_path.endswith(('.xlsx', '.xls')):
             # Polars requires 'xlsx2csv' or similar for direct Excel reading
             # For simplicity, we'll use pandas to read and then convert to Polars
@@ -44,7 +47,7 @@ def read_dataset(file_path):
         print(f"Error reading {file_path}: {e}")
         return None
 
-def standardize_dataframe_columns(df: pl.DataFrame, filename: str, harmonization_map: list):
+def standardize_dataframe_columns(df: pl.DataFrame, filename: str, harmonization_map: list, verbose: bool = False):
     """
     Renames columns in a Polars DataFrame to canonical names based on the harmonization map.
     Returns a new DataFrame with standardized column names and only canonical features.
@@ -69,7 +72,7 @@ def standardize_dataframe_columns(df: pl.DataFrame, filename: str, harmonization
 
     return df.select(select_exprs)
 
-def get_unique_values_for_canonical_feature(harmonization_map: list, canonical_feature_name: str, data_folder_path: str):
+def get_unique_values_for_canonical_feature(harmonization_map: list, canonical_feature_name: str, data_folder_path: str, verbose: bool = False):
     """
     Retrieves all unique values for a given canonical feature across all relevant datasets.
     """
@@ -85,20 +88,22 @@ def get_unique_values_for_canonical_feature(harmonization_map: list, canonical_f
                 file_path = os.path.join(data_folder_path, filename)
                 df = read_dataset(file_path)
                 if df is not None:
-                    standardized_df = standardize_dataframe_columns(df, filename, harmonization_map)
+                    standardized_df = standardize_dataframe_columns(df, filename, harmonization_map, verbose=verbose)
                     if canonical_feature_name in standardized_df.columns:
                         # Use .unique() on the Series and convert to string for consistency
                         unique_values.update(standardized_df[canonical_feature_name].cast(pl.Utf8).unique().to_list())
                     else:
-                        print(f"Warning: Canonical column '{canonical_feature_name}' not found in standardized DataFrame for '{filename}'.")
+                        if verbose:
+                            print(f"Warning: Canonical column '{canonical_feature_name}' not found in standardized DataFrame for '{filename}'.")
             break
 
     if not found_feature:
-        print(f"Error: Canonical feature '{canonical_feature_name}' not found in the harmonization map.")
+        if verbose:
+            print(f"Error: Canonical feature '{canonical_feature_name}' not found in the harmonization map.")
 
     return sorted(list(unique_values))
 
-def merge_datasets_by_canonical_key(harmonization_map: list, data_folder_path: str, merge_key_canonical_name: str):
+def merge_datasets_by_canonical_key(harmonization_map: list, data_folder_path: str, merge_key_canonical_name: str, verbose: bool = False):
     """
     Merges all datasets in the specified folder based on a common canonical key.
     Returns a single merged Polars DataFrame.
@@ -110,10 +115,11 @@ def merge_datasets_by_canonical_key(harmonization_map: list, data_folder_path: s
         file_path = os.path.join(data_folder_path, filename)
         pl_df = read_dataset(file_path)
         if pl_df is not None:
-            standardized_pl_df = standardize_dataframe_columns(pl_df, filename, harmonization_map)
+            standardized_pl_df = standardize_dataframe_columns(pl_df, filename, harmonization_map, verbose=verbose)
             
             if merge_key_canonical_name not in standardized_pl_df.columns:
-                print(f"Warning: Merge key '{merge_key_canonical_name}' not found in standardized DataFrame for '{filename}'. Skipping merge for this file.")
+                if verbose:
+                    print(f"Warning: Merge key '{merge_key_canonical_name}' not found in standardized DataFrame for '{filename}'. Skipping merge for this file.")
                 continue
 
             if merged_pl_df is None:
@@ -125,19 +131,51 @@ def merge_datasets_by_canonical_key(harmonization_map: list, data_folder_path: s
                 
     return merged_pl_df
 
-def filter_dataframe_by_canonical_value(df: pl.DataFrame, canonical_feature_name: str, value: str):
+def filter_dataframe_by_canonical_value(df: pl.DataFrame, canonical_feature_name: str, value: str, verbose: bool = False):
     """
     Filters a Polars DataFrame based on a specific value in a canonical feature column.
     Assumes the DataFrame already has canonical column names.
     """
     if canonical_feature_name not in df.columns:
-        print(f"Error: Canonical feature '{canonical_feature_name}' not found in the DataFrame.")
+        if verbose:
+            print(f"Error: Canonical feature '{canonical_feature_name}' not found in the DataFrame.")
         return pl.DataFrame() # Return empty DataFrame
     
     # Cast to Utf8 for consistent string comparison
     return df.filter(pl.col(canonical_feature_name).cast(pl.Utf8) == value)
 
-def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str, user_request: str, llm_providers: list):
+def get_unique_values_from_df(df: pl.DataFrame, canonical_feature_name: str, verbose: bool = False):
+    """
+    Retrieves all unique values for a given canonical feature from a Polars DataFrame.
+    """
+    if canonical_feature_name not in df.columns:
+        if verbose:
+            print(f"Error: Canonical feature '{canonical_feature_name}' not found in the DataFrame.")
+        return []
+    return df[canonical_feature_name].unique().to_list()
+
+def get_unique_values_from_single_file(file_path: str, harmonization_map: list, canonical_feature_name: str, verbose: bool = False):
+    """
+    Retrieves all unique values for a given canonical feature from a single specified dataset file.
+    """
+    df = read_dataset(file_path)
+    if df is None:
+        if verbose:
+            print(f"Error: Could not read dataset from {file_path}.")
+        return []
+    
+    # Extract filename from file_path for standardize_dataframe_columns
+    filename = os.path.basename(file_path)
+    standardized_df = standardize_dataframe_columns(df, filename, harmonization_map, verbose=verbose)
+    
+    if canonical_feature_name not in standardized_df.columns:
+        if verbose:
+            print(f"Error: Canonical feature '{canonical_feature_name}' not found in the standardized DataFrame for {filename}.")
+        return []
+    
+    return standardized_df[canonical_feature_name].cast(pl.Utf8).unique().to_list()
+
+def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str, user_request: str, llm_providers: list, cli_args):
     """
     Uses an LLM (Planner Agent) to generate a data manipulation plan and then executes it.
     """
@@ -164,12 +202,36 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
         -   **Inputs**: `df` (Polars DataFrame), `canonical_feature_name` (string), `value` (string).
         -   **Output**: A filtered Polars DataFrame.
 
+    5.  `get_unique_values_from_df(df, canonical_feature_name)`:
+        -   **Description**: Retrieves all unique values for a given canonical feature from a Polars DataFrame.
+        -   **Inputs**: `df` (Polars DataFrame), `canonical_feature_name` (string).
+        -   **Output**: A list of unique values (strings).
+
     Your task is to generate a JSON plan that describes the sequence of operations to fulfill the user's request. The plan should be a list of objects, where each object represents a step. Each step must have:
     -   `"function"`: The name of the function to call (e.g., "merge_datasets_by_canonical_key").
     -   `"args"`: An object containing the arguments for the function. Arguments should be directly mappable to the function's parameters. For `df` arguments, use a placeholder like `"_current_df_"` if the DataFrame is an output from a previous step, or `"_all_datasets_"` if it implies loading all datasets.
     -   `"output_variable"`: (Optional) The name of a variable to store the output of this step (e.g., "merged_data").
 
-    You must start by loading all datasets and standardizing their columns if the request implies working with multiple datasets or filtering/merging.
+    The harmonization map for the current datasets is provided below. You MUST use the `canonical_name` values from this map when referring to features in your plan. Do NOT use original column names or make up new canonical names.
+
+    Harmonization Map: {harmonization_map_json}
+
+    When the user asks to find unique values for a canonical feature across all datasets, you should directly use the `get_unique_values_for_canonical_feature` function. Do NOT attempt to merge datasets first for this specific type of request, as it can be inefficient.
+
+    Example Plan (Get Unique Values for a Canonical Feature):
+    ```json
+    [
+      {{
+        "function": "get_unique_values_for_canonical_feature",
+        "args": {{
+          "harmonization_map": "_harmonization_map_",
+          "canonical_feature_name": "<CANONICAL_FEATURE_NAME_FROM_MAP>",
+          "data_folder_path": "_data_folder_path_"
+        }},
+        "output_variable": "unique_values_for_feature"
+      }}
+    ]
+    ```
 
     Example Plan (Merge and then Filter):
     ```json
@@ -179,7 +241,7 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
         "args": {{
           "harmonization_map": "_harmonization_map_",
           "data_folder_path": "_data_folder_path_",
-          "merge_key_canonical_name": "COSMICID"
+          "merge_key_canonical_name": "<CANONICAL_MERGE_KEY_FROM_MAP>"
         }},
         "output_variable": "merged_df"
       }},
@@ -187,8 +249,8 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
         "function": "filter_dataframe_by_canonical_value",
         "args": {{
           "df": "_merged_df_",
-          "canonical_feature_name": "CellLine",
-          "value": "A549"
+          "canonical_feature_name": "<CANONICAL_FEATURE_NAME_FROM_MAP>",
+          "value": "<VALUE_TO_FILTER_BY>"
         }},
         "output_variable": "filtered_df"
       }}
@@ -198,12 +260,24 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
     User Request: {user_request}
     """
 
-    planner_prompt = PromptTemplate(template=available_functions_description, input_variables=["user_request"])
+    planner_prompt = PromptTemplate(template=available_functions_description, input_variables=["user_request", "harmonization_map_json"])
     
     print("Generating manipulation plan with LLM...")
+    harmonization_map_json = json.dumps(harmonization_map, indent=2)
+    if cli_args.verbose:
+        print(f"Prompting LLM with: {planner_prompt.template.format(user_request=user_request, harmonization_map_json=harmonization_map_json)}")
     try:
-        plan_json_str = get_llm_response(planner_prompt.template, {"user_request": user_request}, llm_providers)
-        plan_json_str = plan_json_str.strip().replace("```json", "").replace("```", "")
+        plan_json_str = get_llm_response(planner_prompt.template, {"user_request": user_request, "harmonization_map_json": harmonization_map_json}, llm_providers)
+        if cli_args.verbose:
+            print(f"Raw LLM response: {plan_json_str}") # Debug print
+        plan_json_str = plan_json_str.strip()
+        # Extract only the last JSON part from the LLM response
+        json_start = plan_json_str.rfind('[')
+        json_end = plan_json_str.rfind(']')
+        if json_start != -1 and json_end != -1 and json_end > json_start:
+            plan_json_str = plan_json_str[json_start : json_end + 1]
+        else:
+            raise ValueError("Could not find a valid JSON array in the LLM response.")
         plan = json.loads(plan_json_str)
         print("Generated Plan:")
         print(json.dumps(plan, indent=2))
@@ -253,7 +327,14 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
             if func is None:
                 raise ValueError(f"Function '{function_name}' not found.")
 
-            print(f"Executing step {step_idx + 1}: {function_name}({resolved_args})")
+            if args.verbose:
+                print(f"Executing step {step_idx + 1}: {function_name}({resolved_args})")
+            
+            # Dynamically add verbose argument if the function accepts it
+            func_signature = inspect.signature(func)
+            if 'verbose' in func_signature.parameters:
+                resolved_args['verbose'] = args.verbose
+            
             result = func(**resolved_args)
             
             if output_variable:
@@ -273,7 +354,25 @@ def plan_and_execute_manipulation(harmonization_map: list, data_folder_path: str
             return
 
     print("Manipulation plan executed successfully.")
-    # You can return the final DataFrame or result here if needed
+    # Save the final output if an output file is specified
+    if output_variable and args.output_file:
+        output_data = local_vars.get(output_variable)
+        if output_data is not None:
+            output_dir = os.path.dirname(args.output_file)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            
+            if isinstance(output_data, list):
+                with open(args.output_file, 'w') as f:
+                    for item in output_data:
+                        f.write(f"{item}\n")
+                print(f"Output saved to {args.output_file}")
+            elif isinstance(output_data, pl.DataFrame):
+                output_data.write_csv(args.output_file)
+                print(f"Output DataFrame saved to {args.output_file}")
+            else:
+                print(f"Warning: Cannot save output of type {type(output_data)} to file.")
+
     return local_vars.get(output_variable) # Return the last outputted variable
 
 def main():
@@ -290,8 +389,12 @@ def main():
                         help="The value to filter by for the 'filter' action.")
     parser.add_argument("--request", type=str,
                         help="Natural language request for 'llm_guided_manipulation' action.")
+    parser.add_argument("--output_file", type=str,
+                        help="Optional: Path to save the output of the manipulation (e.g., unique values, merged data).")
     parser.add_argument("--llm_providers", type=str, default="google,nvidia,groq",
                         help="Comma-separated list of LLM providers to use, in order of preference (e.g., 'google,nvidia,groq').")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Enable verbose output for debugging.")
 
     args = parser.parse_args()
 
@@ -302,6 +405,10 @@ def main():
         if not os.path.isdir(args.data_folder_path):
             print(f"Error: Data folder path '{args.data_folder_path}' is not a valid directory. Cannot auto-generate harmonization map.")
             return
+
+        analysis_output_dir = os.path.join(args.data_folder_path, "Analysis")
+        os.makedirs(analysis_output_dir, exist_ok=True)
+        auto_generated_map_path = os.path.join(analysis_output_dir, "harmonization_map.json")
 
         all_analyses = {}
         print("---" + " Auto-generating Phase 1: Individual Dataset Analysis " + "---")
@@ -327,11 +434,12 @@ def main():
             return
 
         try:
-            with open(args.harmonization_map_path, 'w') as f:
+            with open(auto_generated_map_path, 'w') as f:
                 json.dump(harmonization_map, f, indent=2)
-            print(f"\nAuto-generated harmonization map saved to: {args.harmonization_map_path}")
+            print(f"\nAuto-generated harmonization map saved to: {auto_generated_map_path}")
+            args.harmonization_map_path = auto_generated_map_path # Update path for subsequent use
         except Exception as e:
-            print(f"Error saving auto-generated harmonization map to {args.harmonization_map_path}: {e}")
+            print(f"Error saving auto-generated harmonization map to {auto_generated_map_path}: {e}")
             return
 
     if not os.path.isdir(args.data_folder_path):
@@ -403,7 +511,7 @@ def main():
         if not args.request:
             print("Error: --request is required for 'llm_guided_manipulation' action.")
             return
-        plan_and_execute_manipulation(harmonization_map, args.data_folder_path, args.request, llm_providers_list)
+        plan_and_execute_manipulation(harmonization_map, args.data_folder_path, args.request, llm_providers_list, args)
 
 if __name__ == "__main__":
     main()

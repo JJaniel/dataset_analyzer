@@ -7,36 +7,7 @@ from dotenv import load_dotenv
 import json
 from tools.data_synthesizer import synthesize_analyses
 from tools.data_analyzer import analyze_individual_dataset, get_dataset_sample
-
-load_dotenv()
-
-def parse_json_with_fix(json_string, retries=3):
-    """
-    Attempts to parse a JSON string, with retries and basic fixing for common issues.
-    """
-    for i in range(retries):
-        try:
-            return json.loads(json_string)
-        except json.JSONDecodeError as e:
-            print(f"JSON parsing error (attempt {i+1}/{retries}): {e}")
-            # Attempt to fix common issues
-            if "Unterminated string" in str(e) or "Expecting ',' delimiter" in str(e):
-                if json_string.endswith('}'):
-                    json_string += ']'
-                elif json_string.endswith(']'):
-                    json_string += '}'
-                else:
-                    json_string += '}'
-            elif "Expecting property name enclosed in double quotes" in str(e):
-                # This is harder to fix automatically without more context
-                pass
-            
-            if i < retries - 1:
-                print("Attempting to fix JSON and retry...")
-            else:
-                raise # Re-raise if all retries fail
-
-    return json.loads(json_string) # Should not be reached if retries fail
+from tools.utils import parse_json_with_fix
 
 def main():
     """
@@ -46,7 +17,8 @@ def main():
     parser.add_argument("folder_path", type=str, help="The path to the folder containing your datasets.")
     parser.add_argument("--prompt", type=str, default="",
                         help="Additional prompt to include in the synthesis phase for custom requirements.")
-    parser.add_argument("--output_json", type=str, help="Optional: Path to save the harmonization map JSON output.")
+    parser.add_argument("--output_json", type=str, default="harmonization_map.json",
+                        help="Optional: Path to save the harmonization map JSON output.")
     parser.add_argument("--llm_providers", type=str, default="google,nvidia,groq",
                         help="Comma-separated list of LLM providers to use, in order of preference (e.g., 'google,nvidia,groq').")
     args = parser.parse_args()
@@ -68,7 +40,23 @@ def main():
             print(f"Analyzing {filename}...")
             df = get_dataset_sample(file_path)
             if df is not None:
-                analysis = analyze_individual_dataset(file_path, df, llm_providers)
+                metadata_content = None
+                base_filename, _ = os.path.splitext(filename)
+                METADATA_EXTENSIONS = ['.json', '.txt', '.yaml', '.yml', '.md'] # Common metadata extensions
+
+                for ext in METADATA_EXTENSIONS:
+                    metadata_filename = base_filename + ext
+                    metadata_file_path = os.path.join(folder_path, metadata_filename)
+                    if os.path.isfile(metadata_file_path):
+                        try:
+                            with open(metadata_file_path, 'r', encoding='utf-8') as f:
+                                metadata_content = f.read()
+                            print(f"  Found metadata file: {metadata_filename}")
+                            break # Found metadata, no need to check other extensions
+                        except Exception as e:
+                            print(f"  Error reading metadata file {metadata_filename}: {e}")
+
+                analysis = analyze_individual_dataset(file_path, df, llm_providers, metadata_content)
                 if analysis:
                     all_analyses[filename] = analysis
 
@@ -88,6 +76,9 @@ def main():
     print(json.dumps(harmonization_map, indent=2))
 
     if output_json_path:
+        output_dir = os.path.dirname(output_json_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         try:
             with open(output_json_path, 'w') as f:
                 json.dump(harmonization_map, f, indent=2)

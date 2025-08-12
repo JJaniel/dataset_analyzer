@@ -17,6 +17,8 @@ This tool is invaluable for researchers, data scientists, and analysts working w
 -   **Canonical Naming Suggestions**: Proposes standardized, canonical names for grouped features, promoting clarity and uniformity in your data schema.
 -   **Comprehensive Synthesis Report**: Generates a structured JSON report summarizing the combined information across all analyzed datasets, highlighting data relationships.
 -   **Flexible Data Ingestion**: Supports common tabular data formats including CSV (`.csv`) and Excel (`.xlsx`, `.xls`) files.
+-   **Automatic Metadata Detection**: Automatically discovers and utilizes metadata files (e.g., `.json`, `.txt`, `.yaml`) present alongside your datasets, providing richer context for LLM analysis.
+-   **Robust LLM Output Parsing**: Improved handling of LLM responses, ensuring accurate JSON parsing even with varied output formats.
 -   **Robust LLM Fallback**: Implements a fallback mechanism to seamlessly switch between LLM providers (Google, NVIDIA, Groq) if one fails or hits rate limits, ensuring continuous operation.
 -   **Configurable LLM Providers**: Allows users to specify the order of LLM providers to use via command-line arguments, offering flexibility and control.
 -   **Data Manipulation with Polars**: The `data_manipulator.py` script now leverages Polars for high-performance data reading, column standardization, merging, and filtering, offering significant speed improvements for large datasets.
@@ -97,7 +99,7 @@ To analyze your datasets and generate the harmonization map, run the `main.py` s
 python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] [--prompt "Your additional instructions here"] [--llm_providers "provider1,provider2,..."]
 ```
 
--   `<path_to_your_dataset_folder>`: The absolute or relative path to the folder containing your dataset files (CSV or Excel).
+-   `<path_to_your_dataset_folder>`: The absolute or relative path to the folder containing your dataset files (CSV or Excel). The tool will automatically look for metadata files (e.g., `.json`, `.txt`, `.yaml`, `.yml`, `.md`) with the same base name in this folder to provide additional context for analysis.
 -   `--output_json <output_file_path>`: Optional. Path to save the harmonization map JSON output (e.g., `harmonization_map.json`).
 -   `--prompt "Your additional instructions here"`: Optional. Additional prompt to include in the synthesis phase for custom requirements.
 -   `--llm_providers "provider1,provider2,..."`: Optional. A comma-separated list of LLM providers to use, in order of preference. Supported providers are `google`, `nvidia`, and `groq`. If not specified, the default order is `google,nvidia,groq`.
