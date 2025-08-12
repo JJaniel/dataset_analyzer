@@ -1,5 +1,11 @@
 # News
 
+## Version 0.1.3
+
+-   **Improved LLM Provider Selection**: Enhanced the LLM fallback mechanism to prioritize and stick with the first successful LLM provider for subsequent analyses, significantly improving efficiency and reducing redundant API calls.
+-   **Increased LLM Token Limits**: Adjusted maximum token limits for NVIDIA and Groq LLMs to accommodate larger and more detailed harmonization map outputs, preventing truncation.
+-   **Refined Harmonization Map Output**: Restructured the harmonization map JSON output for better clarity and conciseness. The output now features top-level `harmonization_details` (list of canonical features) and `dataset_info` (dataset-level metadata). Additionally, `original_columns` now includes detailed `data_type` and `nan_count` for each mapped column.
+
 ## Version 0.1.2
 
 -   **Enhanced Individual Dataset Analysis**: Implemented sampling of unique values for each column to provide richer context for LLM analysis.
