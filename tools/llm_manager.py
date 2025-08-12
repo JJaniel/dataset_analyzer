@@ -10,6 +10,7 @@ load_dotenv()
 def get_llm_response(prompt_template, input_variables, providers_to_try=None):
     """
     Attempts to get a response from an LLM, with fallback mechanisms.
+    Returns the response content and the name of the successful provider.
     """
     llm_providers = providers_to_try if providers_to_try is not None else ["groq", "google", "nvidia"] # Prioritize Groq
 
@@ -26,7 +27,7 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
                 formatted_prompt = prompt_template.format(**input_variables)
                 response = model.generate_content(formatted_prompt)
                 print(f"Successfully got response from {provider.capitalize()} LLM.")
-                return response.text
+                return response.text, provider
 
             elif provider == "nvidia":
                 nvidia_api_key = os.getenv("NVIDIA_API_KEY")
@@ -48,7 +49,7 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
                     stream=False
                 )
                 print(f"Successfully got response from {provider.capitalize()} LLM.")
-                return completion.choices[0].message.content
+                return completion.choices[0].message.content, provider
 
             elif provider == "groq":
                 groq_api_key = os.getenv("GROQ_API_KEY")
@@ -67,7 +68,7 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
                     stream=False
                 )
                 print(f"Successfully got response from {provider.capitalize()} LLM.")
-                return completion.choices[0].message.content
+                return completion.choices[0].message.content, provider
 
         except Exception as e:
             print(f"{provider.capitalize()} LLM failed: {e}. Trying next provider.")

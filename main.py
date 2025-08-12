@@ -34,6 +34,7 @@ def main():
 
     all_analyses = {}
     print("--- Phase 1: Individual Dataset Analysis ---")
+    successful_provider = None
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
         if os.path.isfile(file_path):
@@ -56,9 +57,17 @@ def main():
                         except Exception as e:
                             print(f"  Error reading metadata file {metadata_filename}: {e}")
 
-                analysis = analyze_individual_dataset(file_path, df_sample, llm_providers, metadata_content)
+                providers_to_try = [successful_provider] if successful_provider else llm_providers
+                analysis, provider = analyze_individual_dataset(file_path, df_sample, providers_to_try, metadata_content)
                 if analysis:
                     all_analyses[filename] = analysis
+                    if provider:
+                        successful_provider = provider
+                        # Also update the main list to prioritize the successful one for the synthesis phase
+                        if provider in llm_providers:
+                            llm_providers.remove(provider)
+                            llm_providers.insert(0, provider)
+
 
     if not all_analyses:
         print("No datasets were successfully analyzed.")
@@ -66,6 +75,7 @@ def main():
 
     print("\n--- Phase 2: Cross-Dataset Synthesis ---")
     print("Synthesizing results to find common features...")
+    # The llm_providers list is now prioritized with the successful provider
     harmonization_map = synthesize_analyses(all_analyses, additional_prompt, llm_providers)
 
     if isinstance(harmonization_map, str):
@@ -85,6 +95,7 @@ def main():
             print(f"\nHarmonization map saved to: {output_json_path}")
         except Exception as e:
             print(f"Error saving harmonization map to {output_json_path}: {e}")
+
 
 if __name__ == "__main__":
     main()

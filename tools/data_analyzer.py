@@ -10,6 +10,7 @@ def analyze_individual_dataset(file_path, df_sample, llm_providers, metadata_con
     """
     Analyzes a single dataset to understand its structure and semantic meaning.
     df_sample: A sample of the dataframe for LLM analysis.
+    Returns the analysis and the name of the successful provider.
     """
     metadata_instruction = ""
     if metadata_content:
@@ -21,7 +22,7 @@ def analyze_individual_dataset(file_path, df_sample, llm_providers, metadata_con
     df_full = read_full_dataset(file_path)
     if df_full is None:
         print(f"Error: Could not read full dataset from {file_path} for shape and NaN counts.")
-        return None
+        return None, None
 
     # Clean column names by stripping whitespace
     df_full.columns = df_full.columns.str.strip()
@@ -65,11 +66,12 @@ def analyze_individual_dataset(file_path, df_sample, llm_providers, metadata_con
 
 
     try:
-        result_content = get_llm_response(template, input_variables, llm_providers)
+        result_content, successful_provider = get_llm_response(template, input_variables, llm_providers)
         print(f"Raw LLM response: {result_content}") # Debugging line
         cleaned_result = result_content.strip().replace("```json", "").replace("```", "")
         # Use the robust JSON parser from main.py
-        return parse_json_with_fix(cleaned_result)
+        return parse_json_with_fix(cleaned_result), successful_provider
     except Exception as e:
         print(f"An error occurred during individual analysis of {file_path}: {e}")
-        return None
+        return None, None
+
