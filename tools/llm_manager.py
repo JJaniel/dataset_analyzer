@@ -45,7 +45,7 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
                     messages=[{"role": "user", "content": formatted_prompt}],
                     temperature=0.2,
                     top_p=0.7,
-                    max_tokens=2048,
+                    max_tokens=8192,
                     stream=False
                 )
                 print(f"Successfully got response from {provider.capitalize()} LLM.")
@@ -63,7 +63,7 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
                     model="llama-3.1-8b-instant",
                     messages=[{"role": "user", "content": formatted_prompt}],
                     temperature=1,
-                    max_completion_tokens=2048,
+                    max_completion_tokens=8192,
                     top_p=1,
                     stream=False
                 )
