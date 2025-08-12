@@ -87,7 +87,7 @@ def synthesize_analyses(all_analyses, additional_prompt="", llm_providers=None):
     }
 
     try:
-        result_content = get_llm_response(template, input_variables, llm_providers)
+        result_content, _ = get_llm_response(template, input_variables, llm_providers)
         cleaned_result = result_content.strip().replace("```json", "").replace("```", "")
         return json.loads(cleaned_result)
     except Exception as e:
