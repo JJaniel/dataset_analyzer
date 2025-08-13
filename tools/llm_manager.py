@@ -12,7 +12,7 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
     Attempts to get a response from an LLM, with fallback mechanisms.
     Returns the response content and the name of the successful provider.
     """
-    llm_providers = providers_to_try if providers_to_try is not None else ["groq", "google", "nvidia"] # Prioritize Groq
+    llm_providers = providers_to_try if providers_to_try is not None else ["groq", "google", "nvidia", "nvidia_nemotron"] # Prioritize Groq
 
     for provider in llm_providers:
         print(f"Attempting to use {provider.capitalize()} LLM...")
@@ -39,13 +39,35 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
                     api_key=nvidia_api_key
                 )
                 formatted_prompt = prompt_template.format(**input_variables)
-                
+
                 completion = client.chat.completions.create(
                     model="meta/llama-3.3-70b-instruct",
                     messages=[{"role": "user", "content": formatted_prompt}],
                     temperature=0.2,
                     top_p=0.7,
                     max_tokens=8192,
+                    stream=False
+                )
+                print(f"Successfully got response from {provider.capitalize()} LLM.")
+                return completion.choices[0].message.content, provider
+
+            elif provider == "nvidia_nemotron":
+                nvidia_api_key = os.getenv("NVIDIA_API_KEY")
+                if not nvidia_api_key:
+                    print("NVIDIA API Key not found. Skipping NVIDIA Nemotron LLM.")
+                    continue
+                client = OpenAI(
+                    base_url="https://integrate.api.nvidia.com/v1",
+                    api_key=nvidia_api_key
+                )
+                formatted_prompt = prompt_template.format(**input_variables)
+
+                completion = client.chat.completions.create(
+                    model="nvidia/llama-3.1-nemotron-ultra-253b-v1",
+                    messages=[{"role": "user", "content": formatted_prompt}],
+                    temperature=0.6,
+                    top_p=0.95,
+                    max_tokens=4096,
                     stream=False
                 )
                 print(f"Successfully got response from {provider.capitalize()} LLM.")
@@ -73,5 +95,3 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
         except Exception as e:
             print(f"{provider.capitalize()} LLM failed: {e}. Trying next provider.")
             continue
-    
-    raise Exception("All LLM providers failed.")

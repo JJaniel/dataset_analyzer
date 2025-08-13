@@ -382,8 +382,8 @@ def main():
                         help="Path to the JSON file containing the harmonization map (output from main.py).")
     parser.add_argument("data_folder_path", type=str,
                         help="Path to the folder containing the original datasets.")
-    parser.add_argument("--action", type=str, required=True, choices=["unique_values", "merge", "filter", "llm_guided_manipulation"],
-                        help="Action to perform: 'unique_values', 'merge', 'filter', or 'llm_guided_manipulation'.")
+    parser.add_argument("--action", type=str, required=True, choices=["unique_values", "merge", "filter", "llm_guided_manipulation", "generate_hypotheses"],
+                        help="Action to perform: 'unique_values', 'merge', 'filter', 'llm_guided_manipulation', or 'generate_hypotheses'.")
     parser.add_argument("--canonical_feature", type=str,
                         help="The canonical name of the feature for 'unique_values' or 'filter' actions, or the merge key for 'merge' action.")
     parser.add_argument("--filter_value", type=str,
@@ -513,6 +513,10 @@ def main():
             print("Error: --request is required for 'llm_guided_manipulation' action.")
             return
         plan_and_execute_manipulation(harmonization_map, args.data_folder_path, args.request, llm_providers_list, args)
+
+    elif args.action == "generate_hypotheses":
+        print("To generate hypotheses, please run 'python tools/hypothesis_generator.py' directly.")
+        print("This script will prompt you for the necessary inputs.")
 
 if __name__ == "__main__":
     main()
