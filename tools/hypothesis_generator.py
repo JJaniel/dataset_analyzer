@@ -22,9 +22,20 @@ def generate_hypotheses(harmonization_map_path: str, llm_providers: list[str], f
         print(f"Error: Could not decode JSON from the file '{harmonization_map_path}'.")
         return
 
-    canonical_features = list(harmonization_map.keys())
+    harmonization_details = harmonization_map.get("harmonization_details", [])
+    dataset_info = harmonization_map.get("dataset_info", {})
 
-    
+    # Format harmonization_details for LLM
+    formatted_features = "Harmonized Features:\n"
+    for feature in harmonization_details:
+        formatted_features += f"- {feature['canonical_name']}: {feature['semantic_meaning']} (Type: {feature['data_type']})\n"
+
+    # Format dataset_info for LLM
+    formatted_dataset_info = "\nDataset Information:\n"
+    for dataset_name, info in dataset_info.items():
+        formatted_dataset_info += f"- {dataset_name}: Shape {info.get('shape', 'N/A')}\n"
+
+    full_features_context = formatted_features + formatted_dataset_info
 
     prompt_template = PromptTemplate(
         input_variables=["features", "field_of_interest", "web_context"],
@@ -34,7 +45,7 @@ def generate_hypotheses(harmonization_map_path: str, llm_providers: list[str], f
         relating them specifically to the field of {field_of_interest}. You should also provide
         relevant research context and findings from external sources.
 
-        Here are the harmonized features from the dataset:
+        Here is detailed information about the harmonized features and datasets:
         {features}
 
         Here is some recent research and findings related to {field_of_interest} that might be relevant:
@@ -52,14 +63,13 @@ def generate_hypotheses(harmonization_map_path: str, llm_providers: list[str], f
         --- Possible Hypotheses ---
         [A list of 3-5 testable hypotheses. For each, provide a brief explanation of the reasoning,
         ensuring they are specific, measurable, and relevant to both the dataset features and {field_of_interest}.]
-        """
-    )
+        """)
 
     print("Generating hypotheses and insights...")
     hypotheses, _ = get_llm_response(
         prompt_template,
         {
-            "features": ", ".join(canonical_features),
+            "features": full_features_context,
             "field_of_interest": field_of_interest,
             "web_context": web_context
         },
