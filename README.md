@@ -22,6 +22,7 @@ This tool is invaluable for researchers, data scientists, and analysts working w
 -   **Robust LLM Fallback**: Implements a fallback mechanism to seamlessly switch between LLM providers (Google, NVIDIA, Groq) if one fails or hits rate limits, ensuring continuous operation.
 -   **Configurable LLM Providers**: Allows users to specify the order of LLM providers to use via command-line arguments, offering flexibility and control.
 -   **Data Manipulation with Polars**: The `data_manipulator.py` script now leverages Polars for high-performance data reading, column standardization, merging, and filtering, offering significant speed improvements for large datasets. **Updated merge operations to use `how='full'` for clearer and more robust data integration.**
+-   **Advanced Hypothesis Generation**: Utilizes LLMs and web search to generate critical, field-specific hypotheses and insights from harmonized datasets, presented in a structured format.
 
 ## Getting Started
 
@@ -131,7 +132,7 @@ python main.py <path_to_your_dataset_folder> [--output_json <output_file_path>] 
     python main.py my_data --prompt "Also, provide a brief summary of the most important findings."
     ```
 
-### 2. Data Manipulation with Polars (`data_manipulator.py`)
+#### 2. Data Manipulation with Polars (`data_manipulator.py`)
 
 Once you have generated the `harmonization_map.json` file using `main.py`, or if you let `data_manipulator.py` auto-generate it, you can use this script to perform various data manipulation tasks. This script leverages the harmonization map to understand column relationships across your datasets.
 
@@ -167,6 +168,30 @@ python tools/data_manipulator.py <harmonization_map_path> <data_folder_path> --a
     ```bash
     python tools/data_manipulator.py harmonization_map.json my_data --action filter --canonical_feature CellLine --filter_value A549
     ```
+
+### 3. Advanced Hypothesis Generation (`hypothesis_generator.py`)
+
+This tool allows you to generate critical, field-specific hypotheses and insights from your harmonized datasets. It leverages powerful LLMs and integrates web search to provide relevant research context.
+
+To use this feature, run the script interactively:
+
+```bash
+python tools/hypothesis_generator.py
+```
+
+The script will prompt you for the following:
+
+*   **Path to the harmonization map JSON file**: The output from `main.py` (e.g., `harmonization_map.json`).
+*   **Which Field You want to relate to this dataset**: A specific domain or area of interest (e.g., `agriculture`, `Biomedical`, ``Automobile`, `environmental science`). This helps the LLM act as an expert in that field.
+*   **Comma-separated LLM providers**: You can specify your preferred LLM providers (e.g., `google,nvidia,groq`). For advanced reasoning tasks like hypothesis generation, `nvidia_nemotron` is highly recommended. If you press Enter, the default order will be used, which prioritizes `nvidia_nemotron`.
+
+The output will be structured into the following segments:
+
+*   `--- Relation between Dataset and [Your Field] ---`: Concise points showing the connection between your dataset's features and the specified field.
+*   `--- Recent Research and Findings ---`: A summary of relevant recent research and findings from web searches that support or inform the hypotheses.
+*   `--- Possible Hypotheses ---`: A list of testable hypotheses, each with a brief explanation of the reasoning, ensuring relevance to both the dataset features and your chosen field.
+
+## Contributing
 
 ## Contributing
 
