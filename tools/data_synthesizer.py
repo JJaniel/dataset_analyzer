@@ -1,88 +1,42 @@
-import json
-from langchain.prompts import PromptTemplate
 from tools.llm_manager import get_llm_response
+from tools.utils import parse_json_with_fix
+import json
 
-def synthesize_analyses(all_analyses, additional_prompt="", llm_providers=None):
+def synthesize_analyses(all_analyses, additional_prompt, llm_providers):
     """
-    Synthesizes analyses from multiple datasets to find common features.
+    Synthesizes individual dataset analyses to create a cross-dataset harmonization map.
     """
-    template = """
-    You are a research assistant. Your goal is to harmonize multiple dataset analyses to help a researcher understand how their data fits together.
+    # Prepare the combined analyses for the LLM prompt
+    analyses_json_str = json.dumps(all_analyses, indent=2)
 
-    Here are the individual analyses from multiple dataset files:
-    {analyses_json}
+    # Create the prompt for the LLM
+    template = f"""
+    You are a data harmonization expert. Your task is to analyze a collection of individual dataset analyses and create a single, unified "harmonization map".
 
-    Based on the provided analyses, perform the following tasks and provide the output in a single JSON object.
+    Here are the analyses of multiple datasets:
+    {{analyses}}
 
-    The JSON object should have two top-level keys: "harmonization_details" and "dataset_info".
+    Your goal is to identify columns across these different datasets that represent the same underlying feature, even if they have different names.
 
-    1.  **`harmonization_details`**: This should be a list of objects, where each object represents a canonical feature. Each object should have the following keys:
-        -   `canonical_name`: The suggested standardized name for the feature.
-        -   `semantic_meaning`: A brief description of what the feature represents.
-        -   `data_type`: The likely data type of the feature (e.g., "Integer", "String", "Float").
-        -   `original_columns`: An object where keys are dataset filenames and values are lists of objects. Each inner object should contain:
-            -   `column_name`: The original column name from the dataset.
-            -   `data_type`: The data type of the original column.
-            -   `nan_count`: The number of NaN/Null values in the original column.
-
-    2.  **`dataset_info`**: This should be an object where keys are the dataset filenames. Each value should be an object containing the dataset's metadata, such as its `shape`.
-
-    Example JSON structure:
-    ```json
-    {{
-      "harmonization_details": [
-        {{
-          "canonical_name": "drug_id",
-          "semantic_meaning": "Unique identifier for a drug.",
-          "data_type": "Integer",
-          "original_columns": {{
-            "dataset1.csv": [
-              {{
-                "column_name": "DRUG_ID_1",
-                "data_type": "Integer",
-                "nan_count": 0
-              }},
-              {{
-                "column_name": "DRUG_ID_A",
-                "data_type": "Integer",
-                "nan_count": 5
-              }}
-            ],
-            "dataset2.xlsx": [
-              {{
-                "column_name": "DrugID",
-                "data_type": "Integer",
-                "nan_count": 2
-              }}
-            ]
-          }}
-        }}
-      ],
-      "dataset_info": {{
-        "dataset1.csv": {{
-          "shape": [100, 5]
-        }},
-        "dataset2.xlsx": {{
-          "shape": [150, 7]
-        }}
-      }}
-    }}
-    ```
-
-    Provide only the JSON output.
+    The output should be a JSON object where:
+    - Each key is a "canonical_feature_name" that you create to represent a common concept (e.g., "patient_id", "tumor_size_mm").
+    - The value for each key is an object containing:
+      - "description": A brief explanation of what this canonical feature represents.
+      - "mapped_columns": A list of objects, where each object details a specific column from a dataset that maps to this canonical feature.
+        - "dataset": The name of the dataset file.
+        - "column": The original name of the column in that dataset.
+        - "semantic_meaning": The original semantic meaning of that column.
 
     {additional_prompt}
+
+    Please provide only the final JSON output for the harmonization map.
     """
 
-    # No need to create dataset_metadata separately, the LLM will do it.
-    input_variables = {
-        "analyses_json": json.dumps(all_analyses, indent=2),
-        "additional_prompt": additional_prompt
-    }
+    input_variables = {"analyses": analyses_json_str}
 
     try:
         result_content, _ = get_llm_response(template, input_variables, llm_providers)
         cleaned_result = result_content.strip().replace("```json", "").replace("```", "")
-        return json.loads(cleaned_result)
+        return parse_json_with_fix(cleaned_result)
     except Exception as e:
         return f"An error occurred during synthesis: {e}"

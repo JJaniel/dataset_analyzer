@@ -7,3 +7,8 @@ python-dotenv
 openpyxl
 openai
 groq
+transformers
+torch
+cerebras-cloud-sdk>=1.49.0
+chromadb
+onnxruntime==1.16.3

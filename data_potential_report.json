@@ -1,0 +1,94 @@
+{
+  "dataset_groups": [
+    {
+      "group_id": 1,
+      "datasets": [
+        "Model.csv",
+        "CCLE_fitted_Response.csv",
+        "OmicsProfiles.csv",
+        "ScreenSequenceMap.csv",
+        "CTRP_fitted_Response.csv",
+        "OmicsSomaticMutations.csv"
+      ],
+      "connections": [
+        {
+          "source": "Model.csv",
+          "target": "CCLE_fitted_Response.csv",
+          "weight": 0.939295610161906,
+          "label": "COSMIC_ID \u2194 COSMICID (0.876)"
+        },
+        {
+          "source": "Model.csv",
+          "target": "CTRP_fitted_Response.csv",
+          "weight": 0.955588767378764,
+          "label": "COSMIC_ID \u2194 COSMICID (0.882)"
+        },
+        {
+          "source": "Model.csv",
+          "target": "OmicsProfiles.csv",
+          "weight": 0.9626380320990493,
+          "label": "ModelID \u2194 ModelID (0.852)"
+        },
+        {
+          "source": "Model.csv",
+          "target": "OmicsSomaticMutations.csv",
+          "weight": 0.8516670938666383,
+          "label": "ModelID \u2194 ModelID (0.852)"
+        },
+        {
+          "source": "Model.csv",
+          "target": "ScreenSequenceMap.csv",
+          "weight": 0.8804047631868583,
+          "label": "ModelID \u2194 ModelID (0.880)"
+        },
+        {
+          "source": "CCLE_fitted_Response.csv",
+          "target": "CTRP_fitted_Response.csv",
+          "weight": 0.9803220112200092,
+          "label": "COSMIC_ID \u2194 COSMIC_ID (0.980)"
+        },
+        {
+          "source": "CCLE_fitted_Response.csv",
+          "target": "OmicsProfiles.csv",
+          "weight": 0.8454485134405745,
+          "label": "CELL_LINE \u2194 StrippedCellLineName (0.840)"
+        },
+        {
+          "source": "OmicsProfiles.csv",
+          "target": "CTRP_fitted_Response.csv",
+          "weight": 0.8626621046403493,
+          "label": "CELL_LINE \u2194 StrippedCellLineName (0.863)"
+        },
+        {
+          "source": "OmicsProfiles.csv",
+          "target": "OmicsSomaticMutations.csv",
+          "weight": 0.9313980286871197,
+          "label": "ModelID \u2194 ModelID (0.931)"
+        },
+        {
+          "source": "OmicsProfiles.csv",
+          "target": "ScreenSequenceMap.csv",
+          "weight": 0.9344921328108503,
+          "label": "ModelID \u2194 ModelID (0.934)"
+        },
+        {
+          "source": "ScreenSequenceMap.csv",
+          "target": "OmicsSomaticMutations.csv",
+          "weight": 0.9625919040805144,
+          "label": "ModelID \u2194 ModelID (0.963)"
+        }
+      ]
+    },
+    {
+      "group_id": 2,
+      "datasets": [
+        "OmicsGlobalSignatures.csv"
+      ],
+      "connections": []
+    }
+  ],
+  "graph_stats": {
+    "total_datasets": 7,
+    "total_connections": 11
+  }
+}

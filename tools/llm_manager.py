@@ -1,7 +1,8 @@
 import os
-import google.generativeai as genai # Import raw Google GenAI
-from openai import OpenAI # For NVIDIA
-from groq import Groq # For Groq
+import google.generativeai as genai  # Google GenAI
+from openai import OpenAI  # NVIDIA
+from groq import Groq  # Groq
+from cerebras.cloud.sdk import Cerebras  # Cerebras
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 
@@ -12,7 +13,7 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
     Attempts to get a response from an LLM, with fallback mechanisms.
     Returns the response content and the name of the successful provider.
     """
-    llm_providers = providers_to_try if providers_to_try is not None else ["groq", "google", "nvidia", "nvidia_nemotron"] # Prioritize Groq
+    llm_providers = providers_to_try if providers_to_try is not None else ["cerebras", "groq", "nvidia", "nvidia_nemotron", "google"]  # Prioritize Cerebras
 
     for provider in llm_providers:
         print(f"Attempting to use {provider.capitalize()} LLM...")
@@ -92,6 +93,28 @@ def get_llm_response(prompt_template, input_variables, providers_to_try=None):
                 print(f"Successfully got response from {provider.capitalize()} LLM.")
                 return completion.choices[0].message.content, provider
 
+            elif provider == "cerebras":
+                cerebras_api_key = os.getenv("CEREBRAS_API_KEY")
+                if not cerebras_api_key:
+                    print("Cerebras API Key not found. Skipping Cerebras LLM.")
+                    continue
+                client = Cerebras(api_key=cerebras_api_key)
+                formatted_prompt = prompt_template.format(**input_variables)
+
+                # Use non-streaming for consistency with other providers
+                completion = client.chat.completions.create(
+                    messages=[{"role": "user", "content": formatted_prompt}],
+                    model="llama-3.3-70b",
+                    stream=False,
+                    max_completion_tokens=8192,
+                    temperature=1,
+                    top_p=1
+                )
+
+                print(f"Successfully got response from {provider.capitalize()} LLM.")
+                return completion.choices[0].message.content, provider
+
         except Exception as e:
             print(f"{provider.capitalize()} LLM failed: {e}. Trying next provider.")
             continue
+    return None, None

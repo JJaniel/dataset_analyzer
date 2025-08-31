@@ -1,0 +1,159 @@
+{
+  "total_datasets": 7,
+  "total_connections": 11,
+  "connected_components": 2,
+  "graph_density": 0.5238095238095238,
+  "most_connected_datasets": [
+    [
+      "Model.csv",
+      0.8333333333333333
+    ],
+    [
+      "OmicsProfiles.csv",
+      0.8333333333333333
+    ],
+    [
+      "CCLE_fitted_Response.csv",
+      0.5
+    ],
+    [
+      "ScreenSequenceMap.csv",
+      0.5
+    ],
+    [
+      "CTRP_fitted_Response.csv",
+      0.5
+    ]
+  ],
+  "strongest_connections": [
+    {
+      "dataset1": "CCLE_fitted_Response.csv",
+      "dataset2": "CTRP_fitted_Response.csv",
+      "similarity": 0.9803220112200092,
+      "feature_connections": 7,
+      "connection_details": [
+        "COSMIC_ID \u2194 COSMIC_ID (0.980)",
+        "CELL_LINE \u2194 CELL_LINE (0.966)",
+        "CELL_LINE_NAME \u2194 CELL_LINE (0.880)",
+        "DRUG_NAME \u2194 GDSC_DRUG_NAME (0.853)",
+        "DRUG_NAME \u2194 DRUG_NAME (0.883)",
+        "GDSC IC50 uMol \u2194 GDSC_IC50 (0.894)",
+        "GDSC AUC \u2194 GDSC_AUC (0.920)"
+      ]
+    },
+    {
+      "dataset1": "Model.csv",
+      "dataset2": "OmicsProfiles.csv",
+      "similarity": 0.9626380320990493,
+      "feature_connections": 8,
+      "connection_details": [
+        "ModelID \u2194 ModelID (0.852)",
+        "ModelID \u2194 ModelConditionID (0.830)",
+        "CellLineName \u2194 StrippedCellLineName (0.895)",
+        "StrippedCellLineName \u2194 StrippedCellLineName (0.963)",
+        "SourceDetail \u2194 SourceModelCondition (0.837)",
+        "ModelType \u2194 ModelConditionID (0.820)",
+        "GrowthPattern \u2194 GrowthPattern (0.957)",
+        "ModelIDAlias \u2194 ModelID (0.870)"
+      ]
+    },
+    {
+      "dataset1": "ScreenSequenceMap.csv",
+      "dataset2": "OmicsSomaticMutations.csv",
+      "similarity": 0.9625919040805144,
+      "feature_connections": 2,
+      "connection_details": [
+        "ModelID \u2194 ModelID (0.963)",
+        "ModelID \u2194 ModelConditionID (0.860)"
+      ]
+    },
+    {
+      "dataset1": "Model.csv",
+      "dataset2": "CTRP_fitted_Response.csv",
+      "similarity": 0.955588767378764,
+      "feature_connections": 5,
+      "connection_details": [
+        "COSMIC_ID \u2194 COSMICID (0.882)",
+        "CELL_LINE \u2194 CellLineName (0.956)",
+        "CELL_LINE \u2194 StrippedCellLineName (0.878)",
+        "CELL_LINE \u2194 RRID (0.805)",
+        "CELL_LINE \u2194 CCLEName (0.806)"
+      ]
+    },
+    {
+      "dataset1": "Model.csv",
+      "dataset2": "CCLE_fitted_Response.csv",
+      "similarity": 0.939295610161906,
+      "feature_connections": 6,
+      "connection_details": [
+        "COSMIC_ID \u2194 COSMICID (0.876)",
+        "CELL_LINE \u2194 CellLineName (0.939)",
+        "CELL_LINE \u2194 StrippedCellLineName (0.847)",
+        "CELL_LINE \u2194 RRID (0.801)",
+        "CELL_LINE_NAME \u2194 CellLineName (0.888)",
+        "CELL_LINE_NAME \u2194 StrippedCellLineName (0.811)"
+      ]
+    },
+    {
+      "dataset1": "OmicsProfiles.csv",
+      "dataset2": "ScreenSequenceMap.csv",
+      "similarity": 0.9344921328108503,
+      "feature_connections": 5,
+      "connection_details": [
+        "ModelID \u2194 ModelID (0.934)",
+        "ModelID \u2194 ModelConditionID (0.880)",
+        "ModelConditionID \u2194 ModelID (0.813)",
+        "ModelConditionID \u2194 ModelConditionID (0.891)",
+        "SequencingID \u2194 SequenceID (0.800)"
+      ]
+    },
+    {
+      "dataset1": "OmicsProfiles.csv",
+      "dataset2": "OmicsSomaticMutations.csv",
+      "similarity": 0.9313980286871197,
+      "feature_connections": 4,
+      "connection_details": [
+        "ModelID \u2194 ModelID (0.931)",
+        "DepMapCode \u2194 DidaID (0.802)",
+        "DepMapCode \u2194 DidaName (0.831)",
+        "ModelConditionID \u2194 ModelID (0.802)"
+      ]
+    },
+    {
+      "dataset1": "Model.csv",
+      "dataset2": "ScreenSequenceMap.csv",
+      "similarity": 0.8804047631868583,
+      "feature_connections": 4,
+      "connection_details": [
+        "ModelID \u2194 ModelID (0.880)",
+        "ModelID \u2194 ModelConditionID (0.815)",
+        "ModelIDAlias \u2194 ModelID (0.816)",
+        "ModelIDAlias \u2194 ModelConditionID (0.805)"
+      ]
+    },
+    {
+      "dataset1": "OmicsProfiles.csv",
+      "dataset2": "CTRP_fitted_Response.csv",
+      "similarity": 0.8626621046403493,
+      "feature_connections": 1,
+      "connection_details": [
+        "CELL_LINE \u2194 StrippedCellLineName (0.863)"
+      ]
+    },
+    {
+      "dataset1": "Model.csv",
+      "dataset2": "OmicsSomaticMutations.csv",
+      "similarity": 0.8516670938666383,
+      "feature_connections": 7,
+      "connection_details": [
+        "ModelID \u2194 ModelID (0.852)",
+        "HCMIID \u2194 NMD (0.803)",
+        "HCMIID \u2194 CivicID (0.808)",
+        "HCMIID \u2194 HessSignature (0.841)",
+        "HCMIID \u2194 DidaID (0.843)",
+        "HCMIID \u2194 DidaName (0.838)",
+        "ModelIDAlias \u2194 ModelID (0.837)"
+      ]
+    }
+  ]
+}

@@ -10,5 +10,10 @@ tools/data_analyzer.py
 tools/data_harmonizer.py
 tools/data_manipulator.py
 tools/data_synthesizer.py
+tools/feature_extractor.py
+tools/graph_builder.py
+tools/hypothesis_generator.py
 tools/llm_manager.py
+tools/pubmed_embedding.py
+tools/report_generator.py
 tools/utils.py

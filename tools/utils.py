@@ -1,6 +1,5 @@
 import json
 import os
-import pandas as pd
 import polars as pl
 
 def parse_json_with_fix(json_string, retries=3):
@@ -34,14 +33,14 @@ def parse_json_with_fix(json_string, retries=3):
 def read_dataset_sample(file_path, sample_size=5):
     """
     Reads a dataset file and returns a small sample of it.
-    For CSV and Excel files, it returns a pandas DataFrame.
+    For CSV and Excel files, it returns a polars DataFrame.
     For other file types, it returns None.
     """
     try:
         if file_path.endswith('.csv'):
-            return pd.read_csv(file_path, nrows=sample_size)
+            return pl.read_csv(file_path, n_rows=sample_size, ignore_errors=True)
         elif file_path.endswith(('.xlsx', '.xls')):
-            return pd.read_excel(file_path, nrows=sample_size)
+            return pl.read_excel(file_path, read_options={"n_rows": sample_size})
         else:
             return None
     except Exception as e:
@@ -50,15 +49,15 @@ def read_dataset_sample(file_path, sample_size=5):
 
 def read_full_dataset(file_path):
     """
-    Reads a full dataset file and returns a pandas DataFrame.
-    For CSV and Excel files, it returns a pandas DataFrame.
+    Reads a full dataset file and returns a polars DataFrame.
+    For CSV and Excel files, it returns a polars DataFrame.
     For other file types, it returns None.
     """
     try:
         if file_path.endswith('.csv'):
-            return pd.read_csv(file_path)
+            return pl.read_csv(file_path, ignore_errors=True)
         elif file_path.endswith(('.xlsx', '.xls')):
-            return pd.read_excel(file_path)
+            return pl.read_excel(file_path)
         else:
             return None
     except Exception as e:
@@ -74,7 +73,7 @@ def get_unique_values_sample(df, sample_size=5):
         try:
             unique_vals = df[column].unique()
             # Take a sample of unique values, convert to list for JSON serialization
-            unique_values[column] = unique_vals[:sample_size].tolist()
+            unique_values[column] = unique_vals.head(sample_size).to_list()
         except Exception as e:
             print(f"Could not get unique values for column {column}: {e}")
             unique_values[column] = []
